@@ -71,7 +71,3 @@ create-hosting-update.ps1
 # Test and diagnostic scripts (development only)
 check_*.php
 test_*.php
-
-# Always include application source
-!/app/
-!/app/**

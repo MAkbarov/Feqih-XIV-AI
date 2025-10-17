@@ -36,6 +36,7 @@ class User extends Authenticatable
         'role_id',
         'registration_ip',
         'last_login_ip',
+        'last_login_at',
         'email_news_opt_in',
     ];
 

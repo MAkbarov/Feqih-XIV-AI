@@ -57,6 +57,8 @@ $installStatus = checkIfInstalled();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $installStatus['installed']) {
     // System is already installed, show message and redirect
     if (!isset($_GET['force'])) {
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        $isLocal = preg_match('/^(localhost|127\\.0\\.0\\.1)(:\\d+)?$/', $host);
         echo '<!DOCTYPE html>
 <html lang="az">
 <head>
@@ -77,6 +79,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $installStatus['installed']) {
             <a href="../admin" class="block w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl transition-colors">
                 Admin panelinə keç
             </a>
+            <form method="post" action="cleanup.php" class="mt-2">
+                <button type="submit" ' . ($isLocal ? 'disabled class="w-full bg-gray-300 text-gray-600 cursor-not-allowed py-3 px-4 rounded-xl"' : 'class="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-xl transition-colors"') . '>
+                    Installeri Sil
+                </button>
+            </form>
+            ' . ($isLocal ? '<p class="text-xs text-gray-500 mt-2">Lokal mühitdə (localhost) installer saxlanılır. Hostingdə bu düymə ilə silə bilərsiniz.</p>' : '') . '
         </div>
         <div class="mt-6 text-xs text-gray-500">
             Quraşdırılma tarixi: ' . (isset($installStatus['lock_content']) ? $installStatus['lock_content'] : 'Naməlum') . '<br>
@@ -350,7 +358,7 @@ function runAllMigrations($pdo) {
 
     $migrations = [
         // Core tables
-        '0001_01_01_000000_create_users_table' => "
+'0001_01_01_000000_create_users_table' => "
             CREATE TABLE IF NOT EXISTS users (
                 id bigint unsigned AUTO_INCREMENT PRIMARY KEY,
                 name varchar(255) NOT NULL,
@@ -360,6 +368,8 @@ function runAllMigrations($pdo) {
                 remember_token varchar(100) NULL,
                 role_id bigint unsigned NULL,
                 registration_ip varchar(45) NULL,
+                last_login_ip varchar(45) NULL,
+                last_login_at timestamp NULL,
                 created_at timestamp NULL,
                 updated_at timestamp NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
@@ -435,7 +445,7 @@ function runAllMigrations($pdo) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
         // Chat sessions and messages
-        '0004_01_01_000000_create_chat_sessions_table' => "
+'0004_01_01_000000_create_chat_sessions_table' => "
             CREATE TABLE IF NOT EXISTS chat_sessions (
                 id bigint unsigned AUTO_INCREMENT PRIMARY KEY,
                 session_id varchar(255) NOT NULL UNIQUE,
@@ -445,6 +455,7 @@ function runAllMigrations($pdo) {
                 is_active tinyint(1) DEFAULT 1,
                 created_at timestamp NULL,
                 updated_at timestamp NULL,
+                ended_at timestamp NULL,
                 INDEX chat_sessions_user_id_index (user_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
@@ -924,7 +935,7 @@ function buildFrontendAssets($basePath) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XIV AI - Quraşdırma Sihirbazı</title>
+    <title>XIV AI - Quraşdırma Bələdçisi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -1011,7 +1022,7 @@ function buildFrontendAssets($basePath) {
                     </div>
                 </div>
                 <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mt-4 tracking-tight">XIV AI Platform</h1>
-                <p class="text-gray-600 mt-1 text-sm">Quraşdırma Sihirbazı • Versiya 1.2.1 • DeXIV</p>
+                <p class="text-gray-600 mt-1 text-sm">Quraşdırma Bələdçisi • Versiya 1.2.0 • DeXIV</p>
                 
                 <!-- Modern step progress -->
                 <div class="mt-6 relative">

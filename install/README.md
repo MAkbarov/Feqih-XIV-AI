@@ -22,7 +22,7 @@ chmod -R 755 storage/
 chmod -R 755 bootstrap/cache/
 ```
 
-### 4. Quraşdırma sihirbazını işə salın
+### 4. Quraşdırma bələdçisini işə salın
 Brauzerinizi açıb `http://your-domain.com/install/setup.php` ünvanına daxil olun.
 
 ### 5. Addımları izləyin

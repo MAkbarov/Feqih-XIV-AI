@@ -43,11 +43,19 @@ try {
     
     // Try to delete the install directory
     $success = deleteDirectory($installDir);
+
+    // Also try to remove root-level install.php stub
+    $installerStub = $basePath . DIRECTORY_SEPARATOR . 'install.php';
+    $stubDeleted = false;
+    if (file_exists($installerStub)) {
+        $stubDeleted = @unlink($installerStub);
+    }
     
     if ($success) {
         echo json_encode([
             'success' => true,
-            'message' => 'Installer qovluğu uğurla silindi'
+            'message' => 'Installer qovluğu uğurla silindi',
+            'install_php_deleted' => $stubDeleted
         ]);
     } else {
         // If we can't delete the directory, at least try to rename it
@@ -55,7 +63,8 @@ try {
         if (@rename($installDir, $backupName)) {
             echo json_encode([
                 'success' => true,
-                'message' => 'Installer qovluğu yenidən adlandırıldı: ' . basename($backupName)
+                'message' => 'Installer qovluğu yenidən adlandırıldı: ' . basename($backupName),
+                'install_php_deleted' => $stubDeleted
             ]);
         } else {
             throw new Exception('Installer qovluğu silinə və ya yenidən adlandırıla bilmədi. Manual silmə lazımdır.');
