@@ -562,7 +562,7 @@ const AiTraining = ({ knowledgeItems, systemPrompt, pagination, search: initialS
                 level: urlTrainingData.level, // Xülase səviyyəsi: 1-4 xülase, 5 tam məzmun
                 crawl_sibling: urlTrainingData.crawlSibling, // Sibling mod
                 category: urlTrainingData.category,
-                source: urlTrainingData.source || 'Advanced URL Training',
+                source: urlTrainingData.source || 'URL Təlimatçısı',
                 progress_token: token
             });
             
@@ -586,14 +586,14 @@ const AiTraining = ({ knowledgeItems, systemPrompt, pagination, search: initialS
                     source: '' 
                 });
                 
-                // ✅ Səhifəni yenilə ki yeni statistika və URL-lər görünsün
+                // Səhifəni yenilə ki yeni statistika və URL-lər görünsün
                 setTimeout(() => {
                     window.location.reload();
-                }, 2000); // 2 saniyə gözlə ki user mesajı görsün
+                }, 2000); // 2 saniyə gözlə
             }
         } catch (error) {
             console.error('Advanced URL Training error:', error);
-            const errorMsg = error.response?.data?.message || 'Advanced URL training xətası!';
+            const errorMsg = error.response?.data?.message || 'URL Təlimat xətası!';
             const debugInfo = error.response?.data?.debug;
             
             let fullErrorMsg = errorMsg;

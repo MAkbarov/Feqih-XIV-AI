@@ -220,17 +220,6 @@ class AiTrainingController extends Controller
             @ini_set('memory_limit', '512M');
             @ini_set('max_execution_time', 0);
             
-            \Log::info('🚀 ADVANCED URL TRAINING: ' . $validated['url'], [
-                'single' => $single,
-                'max_depth' => $maxDepth,
-                'category' => $validated['category'] ?? 'imported',
-                'server' => request()->server('SERVER_NAME'),
-                'user_agent' => request()->server('HTTP_USER_AGENT'),
-                'php_version' => PHP_VERSION,
-                'curl_available' => function_exists('curl_init'),
-                'file_get_contents_available' => ini_get('allow_url_fopen')
-            ]);
-            
             // 🔥 TOKEN-BASED PROGRESS SYSTEM 🔥
             $token = (string) $request->input('progress_token');
             $token = is_string($token) ? trim($token) : '';
@@ -373,13 +362,6 @@ class AiTrainingController extends Controller
                 ], 422);
             }
         } catch (\Exception $e) {
-            \Log::error('❌ ADVANCED URL TRAINING XƏTASI: ' . $e->getMessage(), [
-                'url' => $validated['url'],
-                'error_class' => get_class($e),
-                'error_file' => $e->getFile(),
-                'error_line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
             
             $errorMessage = 'Training xətası: ' . $e->getMessage();
             if (strpos($e->getMessage(), 'cURL') !== false) {
