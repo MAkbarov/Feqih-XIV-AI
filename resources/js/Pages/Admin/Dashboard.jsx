@@ -104,7 +104,7 @@ export default function AdminDashboard({ stats, system_health, notification_stat
     // Quick Actions
     const quickActions = [
         { title: 'İstifadəçilər', icon: 'users', link: '/admin/users', color: 'blue' },
-        { title: 'Provayırlər', icon: 'provider', link: '/admin/providers', color: 'purple' },
+        { title: 'Provayderlər', icon: 'provider', link: '/admin/providers', color: 'purple' },
         { title: 'Söhbətlər', icon: 'feature_chat', link: '/admin/chat-analytics', color: 'green' },
         { title: 'Bilik Bazısı', icon: 'graduate', link: '/admin/ai-training', color: 'indigo' },
         { title: 'Təhlükəsizlik', icon: 'shield_check', link: '/admin/ip-security', color: 'red' },
