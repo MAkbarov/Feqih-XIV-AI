@@ -1514,12 +1514,13 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
           <div className="flex-1 min-w-0 w-full">
             <main className="w-full max-w-none">
               <div 
-                className={`w-full backdrop-blur-xl border border-emerald-200 dark:border-gray-600 rounded-3xl p-3 md:p-6 flex flex-col min-h-0 shadow-2xl hover:shadow-3xl dark:shadow-purple-500/10 border-white/20 dark:border-gray-700/30 transition-all duration-300 relative ${
+                className={`w-full backdrop-blur-xl border border-emerald-200 dark:border-gray-600 rounded-3xl p-3 md:p-6 flex flex-col shadow-2xl hover:shadow-3xl dark:shadow-purple-500/10 border-white/20 dark:border-gray-700/30 transition-all duration-300 relative ${
                   chatBackground === 'transparent' ? 'bg-white/95 dark:!bg-gray-800/95' : 'dark:!bg-gray-800/95'
                 }`}
                 data-chat-background="true"
                 id="chat-container"
                 style={{ 
+                  minHeight: 'calc(100vh - 200px)',
                   background: chatBackground !== 'transparent' ? chatBackground : undefined,
                   backgroundSize: theme?.chat_background_type === 'image' ? 'cover' : undefined,
                   backgroundPosition: theme?.chat_background_type === 'image' ? 'center' : undefined,
@@ -1557,7 +1558,8 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
               </div>
               <div 
                 ref={scrollRef} 
-                className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 md:pr-2 custom-scrollbar"
+                className="flex-1 overflow-y-auto space-y-3 pr-1 md:pr-2 custom-scrollbar" 
+                style={{ maxHeight: 'calc(100vh - 240px)' }}
               >
                 <AnimatePresence>
                   {messages.map((m, idx) => (
@@ -1890,7 +1892,7 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
                   </div>
                   
                   {/* Static Settings Icon - Right Below Send Button */}
-                  <div className="absolute bottom-2 right-2">
+                  <div className="absolute -bottom-12 right-2">
                     <div className="group relative inline-flex items-center justify-center">
                       {/* Animated pulse rings */}
                       <span className="absolute inline-flex h-full w-full rounded-xl bg-gradient-to-r opacity-75 animate-ping" style={{ 

@@ -36,7 +36,8 @@ class UserBackgroundController extends Controller
         // Parse user's background settings from the new structure
         $settings = [
             'type' => $background->active_type ?? 'solid',
-            'color' => $background->solid_color ?? '#f3f4f6',
+            // If solid_color is null (reset), treat as transparent so dark mode works
+            'color' => $background->solid_color ?? 'transparent',
             'gradient' => $background->gradient_value ?? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             'image' => $background->image_url,
             'imageSize' => $background->image_size ?? 'cover',
