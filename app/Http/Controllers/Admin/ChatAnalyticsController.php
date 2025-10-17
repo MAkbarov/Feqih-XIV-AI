@@ -13,6 +13,76 @@ use Carbon\Carbon;
 
 class ChatAnalyticsController extends Controller
 {
+    /**
+     * Söhbətlər siyahısı
+     */
+    public function sessions(Request $request): Response
+    {
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $search = $request->get('search');
+        $perPage = $request->get('per_page', 20);
+        
+        $query = ChatSession::with(['user:id,name,email', 'messages'])
+            ->withCount('messages');
+        
+        // Search
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Sorting
+        if (in_array($sortBy, ['created_at', 'updated_at', 'messages_count'])) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+        
+        $sessions = $query->paginate($perPage)->withQueryString()->through(function ($session) {
+            $duration = null;
+            if ($session->ended_at) {
+                $duration = $session->created_at->diffInMinutes($session->ended_at);
+            }
+            
+            return [
+                'id' => $session->id,
+                'user_name' => $session->user ? $session->user->name : 'Qonaq',
+                'user_email' => $session->user ? $session->user->email : null,
+                'messages_count' => $session->messages_count,
+                'created_at' => $session->created_at->format('d.m.Y H:i'),
+                'updated_at' => $session->updated_at->format('d.m.Y H:i'),
+                'ended_at' => $session->ended_at ? $session->ended_at->format('d.m.Y H:i') : null,
+                'duration' => $duration,
+                'status' => $session->ended_at ? 'Bitdi' : 'Aktiv',
+            ];
+        });
+        
+        // Statistics
+        $stats = [
+            'total_sessions' => ChatSession::count(),
+            'active_sessions' => ChatSession::whereNull('ended_at')->count(),
+            'today_sessions' => ChatSession::whereDate('created_at', Carbon::today())->count(),
+            'total_messages' => Message::count(),
+        ];
+        
+        return Inertia::render('Admin/ChatSessions', [
+            'sessions' => $sessions,
+            'stats' => $stats,
+            'filters' => [
+                'sort_by' => $sortBy,
+                'sort_order' => $sortOrder,
+                'search' => $search,
+                'per_page' => $perPage,
+            ],
+        ]);
+    }
+    
     public function index(Request $request): Response
     {
         $dateFrom = $request->get('date_from', Carbon::now()->subDays(30)->format('Y-m-d'));

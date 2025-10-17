@@ -50,9 +50,16 @@ export default function ChatAnalytics({
             <div className="p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
                     <div className="flex items-center gap-3">
+                        <Link
+                            href="/admin/chat-analytics"
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            title="Söhbətlər siyahısına qayıt"
+                        >
+                            <Icon name="arrow_left" size={24} color="#6b7280" />
+                        </Link>
                         <Icon name="chart" size={28} color="#3b82f6" />
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">
-                            Çat Analitikaları
+                            Feedback Statistikası
                         </h1>
                     </div>
                     <div className="flex flex-wrap gap-2 md:gap-3 md:self-end">
@@ -82,7 +89,7 @@ export default function ChatAnalytics({
                             Bütün Statistikaları Sıfırla
                         </button>
                         <a
-                            href="/admin/chat-analytics/feedback"
+                            href="/admin/chat-analytics/feedback/list"
                             className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600/90 transition-colors flex items-center gap-2"
                         >
                             <Icon name="clipboard" size={16} color="white" />
@@ -252,7 +259,7 @@ export default function ChatAnalytics({
                 <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                     <div className="flex items-center gap-2 mb-6">
                         <Icon name="chart" size={24} color="#9ca3af" />
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Ǝtraflı Statistika</h2>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Ətraflı Statistika</h2>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div className="text-center">

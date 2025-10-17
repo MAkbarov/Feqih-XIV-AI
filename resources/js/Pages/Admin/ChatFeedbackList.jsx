@@ -14,7 +14,7 @@ export default function ChatFeedbackList({ feedback, filter, stats }) {
     { key: 'report', label: 'Bildirilən', count: stats.reports, color: 'text-orange-600 dark:text-orange-300' },
   ]), [stats]);
 
-  const makeUrl = (type, page = 1) => `/admin/chat-analytics/feedback?${new URLSearchParams({ type: type === 'all' ? '' : type, page }).toString()}`.replace(/%3D/g,'=');
+  const makeUrl = (type, page = 1) => `/admin/chat-analytics/feedback/list?${new URLSearchParams({ type: type === 'all' ? '' : type, page }).toString()}`.replace(/%3D/g,'=');
 
   return (
     <AdminLayout>
@@ -27,7 +27,7 @@ export default function ChatFeedbackList({ feedback, filter, stats }) {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Çat Feedback Siyahısı</h1>
           </div>
           <Link
-            href="/admin/chat-analytics"
+            href="/admin/chat-analytics/feedback"
             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-white text-sm font-medium bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
           >
             <Icon name="chart" size={16} color="#fff" /> Analitikaya qayıt

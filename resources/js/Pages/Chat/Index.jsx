@@ -1736,7 +1736,8 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
                             {m.ragMeta?.dominant_kb_id != null && (
                               <button
                                 onClick={() => continueFromMessage(m)}
-                                className="px-2 py-1 md:px-3 md:py-1.5 rounded-lg text-xs md:text-sm bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow"
+                                className="px-3 md:px-4 py-1.5 md:py-2 rounded-xl text-xs md:text-sm text-white font-medium transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 bg-gradient-to-r hover:brightness-110"
+                                style={{ background: `linear-gradient(135deg, ${primaryColor}DD, ${secondaryColor || primaryColor}DD)` }}
                                 title="Daha çox məlumat ver"
                               >
                                 Daha çox məlumat ver
@@ -1879,14 +1880,14 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
                       <button
                         onClick={() => (loading || isTypewriting) ? stopGeneration() : sendMessage()}
                         disabled={(isGuest && isOverLimit) || isChatBlocked}
-                        className={`p-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all shadow-lg hover:shadow-xl hover:scale-105 backdrop-blur-sm`}
+                        className={`p-3.5 md:p-4 rounded-2xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all shadow-lg hover:shadow-xl hover:scale-105 bg-gradient-to-r`}
                         style={{ 
-                          backgroundColor: (loading || isTypewriting) ? '#ef4444' : ((isGuest && isOverLimit) || isChatBlocked ? '#ef4444' : primaryColor),
+                          background: (loading || isTypewriting) ? '#ef4444' : ((isGuest && isOverLimit) || isChatBlocked ? '#ef4444' : `linear-gradient(135deg, ${primaryColor}DD, ${secondaryColor || primaryColor}DD)`),
                           boxShadow: `0 4px 20px ${(loading || isTypewriting) ? '#ef444420' : `${primaryColor}20`}`
                         }}
                         title={(loading || isTypewriting) ? 'Dayandır' : (isChatBlocked ? 'İstifadə şərtlərini qəbul edin' : 'Göndər')}
                       >
-                        <Icon name={(loading || isTypewriting) ? 'stop' : (isChatBlocked ? 'shield_check' : 'send')} size={16} />
+                        <Icon name={(loading || isTypewriting) ? 'stop' : (isChatBlocked ? 'shield_check' : 'send')} size={18} />
                       </button>
                     </div>
                   </div>

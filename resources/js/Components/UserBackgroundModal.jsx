@@ -15,64 +15,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
     const [loading, setLoading] = useState(false);
     const toast = useToast();
 
-    // Real-time preview function for color and gradient changes
-    const applyColorPreview = (previewType, previewValue) => {
-        const chatContainer = document.querySelector('#chat-container, [data-chat-background]');
-        if (chatContainer && previewValue) {
-            console.log('Applying color preview:', { type: previewType, value: previewValue });
-            
-            // Clear all background properties first with !important
-            chatContainer.style.setProperty('background-image', '', 'important');
-            chatContainer.style.setProperty('background-size', '', 'important');
-            chatContainer.style.setProperty('background-position', '', 'important');
-            chatContainer.style.setProperty('background-repeat', '', 'important');
-            chatContainer.style.setProperty('background-color', '', 'important');
-            chatContainer.style.setProperty('background', '', 'important');
-            chatContainer.style.setProperty('background-attachment', '', 'important');
-            chatContainer.style.setProperty('background-origin', '', 'important');
-            chatContainer.style.setProperty('background-clip', '', 'important');
-            
-            // Add a small delay to ensure React updates don't override
-            setTimeout(() => {
-                if (previewType === 'solid') {
-                    // Apply solid color with !important to ensure persistence and clear all gradient properties
-                    chatContainer.style.setProperty('background-color', previewValue, 'important');
-                    chatContainer.style.setProperty('background-image', 'none', 'important');
-                    chatContainer.style.setProperty('background', 'none', 'important');
-                    chatContainer.style.setProperty('background-size', 'auto', 'important');
-                    chatContainer.style.setProperty('background-position', '0% 0%', 'important');
-                    chatContainer.style.setProperty('background-repeat', 'repeat', 'important');
-                    chatContainer.style.setProperty('background-attachment', 'scroll', 'important');
-                    chatContainer.style.setProperty('background-origin', 'padding-box', 'important');
-                    chatContainer.style.setProperty('background-clip', 'border-box', 'important');
-                    console.log('Applied solid color preview:', previewValue);
-                    
-                    // Verify application
-                    setTimeout(() => {
-                        console.log('Solid color verification:', {
-                            backgroundColor: chatContainer.style.backgroundColor,
-                            background: chatContainer.style.background,
-                            backgroundImage: chatContainer.style.backgroundImage,
-                            computedStyles: window.getComputedStyle(chatContainer).background
-                        });
-                    }, 100);
-                } else if (previewType === 'gradient') {
-                    // Apply gradient with !important to ensure persistence
-                    chatContainer.style.setProperty('background', previewValue, 'important');
-                    chatContainer.style.setProperty('background-color', '', 'important');
-                    console.log('Applied gradient preview:', previewValue);
-                }
-                
-                // Dispatch event to notify other components
-                window.dispatchEvent(new CustomEvent('backgroundChanged', {
-                    detail: { 
-                        type: previewType, 
-                        background: previewValue
-                    }
-                }));
-            }, 10); // Small delay to prevent React state conflicts
-        }
-    };
 
     // Load current settings from cookie or user data
     useEffect(() => {
@@ -81,30 +23,7 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
         }
     }, [isOpen, isAuthenticated]);
 
-    // Apply background when settings are loaded from API
-    useEffect(() => {
-        // Only apply background when we have valid settings and user is authenticated
-        // This ensures the background is applied when API loads settings
-        if (settings && settings.type && isAuthenticated) {
-            console.log('Settings changed, applying background:', settings.type);
-            applyBackground();
-        }
-    }, [settings.type, settings.color, settings.gradient, settings.image, isAuthenticated]);
 
-    // Apply preview when modal opens with loaded settings
-    useEffect(() => {
-        if (isOpen && settings && settings.type) {
-            console.log('Modal opened, applying preview for type:', settings.type);
-            // Apply real-time preview based on current settings
-            if (settings.type === 'solid') {
-                applyColorPreview('solid', settings.color || '#f3f4f6');
-            } else if (settings.type === 'gradient') {
-                applyColorPreview('gradient', settings.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)');
-            } else if (settings.type === 'image' && settings.image) {
-                applyBackgroundPreview(settings);
-            }
-        }
-    }, [isOpen, settings.type, settings.color, settings.gradient, settings.image]);
 
     const loadCurrentSettings = async () => {
         console.log('loadCurrentSettings called, isAuthenticated:', isAuthenticated);
@@ -348,32 +267,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
         }
     };
 
-    // Real-time preview function for image adjustments
-    const applyBackgroundPreview = (previewSettings) => {
-        const chatContainer = document.querySelector('#chat-container, [data-chat-background]');
-        if (chatContainer && previewSettings.image) {
-            let imageUrl = previewSettings.image;
-            if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
-                imageUrl = '/' + imageUrl;
-            }
-            
-            // Clear any color/gradient backgrounds first
-            chatContainer.style.setProperty('background', '', 'important');
-            chatContainer.style.setProperty('background-color', '', 'important');
-            
-            // Apply image background with new settings
-            chatContainer.style.setProperty('background-image', `url(${imageUrl})`, 'important');
-            chatContainer.style.setProperty('background-size', previewSettings.imageSize || 'cover', 'important');
-            chatContainer.style.setProperty('background-position', previewSettings.imagePosition || 'center', 'important');
-            chatContainer.style.setProperty('background-repeat', 'no-repeat', 'important');
-            
-            console.log('Applied persistent preview:', {
-                url: imageUrl,
-                size: previewSettings.imageSize || 'cover',
-                position: previewSettings.imagePosition || 'center'
-            });
-        }
-    };
 
     // Delete image function
     const handleDeleteImage = async () => {
@@ -386,11 +279,7 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
         setLoading(true);
         try {
             console.log('Sending delete request to /api/user/background-image');
-            const response = await axios.delete('/api/user/background-image', {
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
+            const response = await axios.delete('/api/user/background-image');
             
             console.log('Delete response:', response.data);
             
@@ -406,20 +295,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                 
                 // Switch back to color tab
                 setActiveTab('color');
-                
-                // Reset chat background to default solid color with complete cleanup
-                const chatContainer = document.querySelector('#chat-container, [data-chat-background]');
-                if (chatContainer) {
-                    chatContainer.style.setProperty('background', 'none', 'important');
-                    chatContainer.style.setProperty('background-image', 'none', 'important');
-                    chatContainer.style.setProperty('background-size', 'auto', 'important');
-                    chatContainer.style.setProperty('background-position', '0% 0%', 'important');
-                    chatContainer.style.setProperty('background-repeat', 'repeat', 'important');
-                    chatContainer.style.setProperty('background-attachment', 'scroll', 'important');
-                    chatContainer.style.setProperty('background-origin', 'padding-box', 'important');
-                    chatContainer.style.setProperty('background-clip', 'border-box', 'important');
-                    chatContainer.style.setProperty('background-color', '#f3f4f6', 'important');
-                }
                 
                 toast.success('Şəkil silindi!');
             } else {
@@ -446,12 +321,7 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
         formData.append('image', file);
 
         try {
-            const response = await axios.post('/api/user/upload-background-image', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
+            const response = await axios.post('/api/user/upload-background-image', formData);
 
             if (response.data.success) {
                 console.log('Upload successful, URL:', response.data.url);
@@ -463,9 +333,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                     type: 'image'
                 };
                 setSettings(newSettings);
-                
-                // Apply initial preview
-                applyBackgroundPreview(newSettings);
                 
                 toast.success('Şəkil yükləndi!');
             } else {
@@ -546,10 +413,9 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                         <button
                             onClick={() => {
                                 setActiveTab('image');
-                                // When switching to image tab, set type to image and apply preview if image exists
+                                // When switching to image tab, set type to image if image exists
                                 if (settings.image) {
                                     setSettings(prev => ({ ...prev, type: 'image' }));
-                                    applyBackgroundPreview(settings);
                                 }
                             }}
                             disabled={!isAuthenticated}
@@ -580,8 +446,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                                                 // Keep image data for future use
                                             };
                                             setSettings(newSettings);
-                                            // Apply real-time preview with current color
-                                            applyColorPreview('solid', settings.color || '#f3f4f6');
                                         }}
                                         className={`flex-1 p-3 rounded-lg border-2 text-sm font-medium transition-all ${
                                             settings.type === 'solid'
@@ -600,8 +464,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                                                 // Keep image data for future use
                                             };
                                             setSettings(newSettings);
-                                            // Apply real-time preview with current gradient
-                                            applyColorPreview('gradient', settings.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)');
                                         }}
                                         className={`flex-1 p-3 rounded-lg border-2 text-sm font-medium transition-all ${
                                             settings.type === 'gradient'
@@ -631,8 +493,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                                                         type: 'solid' // Ensure type is solid when color is changed
                                                     };
                                                     setSettings(newSettings);
-                                                    // Real-time preview
-                                                    applyColorPreview('solid', e.target.value);
                                                 }}
                                                 className="w-16 h-12 rounded-lg border-2 border-gray-300 cursor-pointer"
                                             />
@@ -647,8 +507,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                                                         type: 'solid'
                                                     };
                                                     setSettings(newSettings);
-                                                    // Real-time preview
-                                                    applyColorPreview('solid', e.target.value);
                                                 }}
                                                 className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                                 placeholder="#f3f4f6"
@@ -674,8 +532,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                                                         type: 'gradient'
                                                     };
                                                     setSettings(newSettings);
-                                                    // Real-time preview
-                                                    applyColorPreview('gradient', e.target.value);
                                                 }}
                                                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-sm h-20"
                                                 placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
@@ -693,8 +549,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                                                         onClick={() => {
                                                             const newSettings = { ...settings, gradient: gradient.value, type: 'gradient' };
                                                             setSettings(newSettings);
-                                                            // Real-time preview
-                                                            applyColorPreview('gradient', gradient.value);
                                                         }}
                                                         className="text-xs px-3 py-2 border rounded-lg text-left hover:opacity-80 transition-opacity text-white font-medium"
                                                         style={{ background: gradient.value }}
@@ -819,7 +673,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                                                         onClick={() => {
                                                             const newSettings = { ...settings, imageSize: size };
                                                             setSettings(newSettings);
-                                                            applyBackgroundPreview(newSettings);
                                                         }}
                                                         className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
                                                             (settings.imageSize || 'cover') === size
@@ -849,7 +702,6 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                                                         onClick={() => {
                                                             const newSettings = { ...settings, imagePosition: position };
                                                             setSettings(newSettings);
-                                                            applyBackgroundPreview(newSettings);
                                                         }}
                                                         className={`w-8 h-8 text-xs rounded border flex items-center justify-center transition-colors ${
                                                             (settings.imagePosition || 'center') === position

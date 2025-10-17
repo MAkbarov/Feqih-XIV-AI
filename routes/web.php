@@ -188,10 +188,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/theme-settings', [ThemeSettingsController::class, 'index'])->name('theme-settings.index');
     Route::post('/theme-settings', [ThemeSettingsController::class, 'update'])->name('theme-settings.update');
     
-    // Chat Analytics
-    Route::get('/chat-analytics', [\App\Http\Controllers\Admin\ChatAnalyticsController::class, 'index'])->name('chat-analytics.index');
+    // Chat Analytics - Söhbətlər siyahısı
+    Route::get('/chat-analytics', [\App\Http\Controllers\Admin\ChatAnalyticsController::class, 'sessions'])->name('chat-analytics.index');
+    Route::get('/chat-analytics/feedback', [\App\Http\Controllers\Admin\ChatAnalyticsController::class, 'index'])->name('chat-analytics.feedback.index');
     Route::post('/chat-analytics/reset-all', [\App\Http\Controllers\Admin\ChatAnalyticsController::class, 'resetAll'])->name('chat-analytics.reset-all');
-    Route::get('/chat-analytics/feedback', [\App\Http\Controllers\Admin\ChatAnalyticsController::class, 'feedbackList'])->name('chat-analytics.feedback');
+    Route::get('/chat-analytics/feedback/list', [\App\Http\Controllers\Admin\ChatAnalyticsController::class, 'feedbackList'])->name('chat-analytics.feedback');
     Route::delete('/chat-analytics/{feedback}', [\App\Http\Controllers\Admin\ChatAnalyticsController::class, 'deleteFeedback'])->name('chat-analytics.delete');
     Route::get('/chat-analytics/export', [\App\Http\Controllers\Admin\ChatAnalyticsController::class, 'export'])->name('chat-analytics.export');
     

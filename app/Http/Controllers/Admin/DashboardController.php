@@ -102,11 +102,30 @@ class DashboardController extends Controller
             ];
         }
 
+        // Get admin background settings for theme
+        $adminBackground = [
+            'type' => 'solid',
+            'color' => '#6366f1', // Default indigo
+            'gradient' => null
+        ];
+        
+        if (auth()->user()->chat_background_color) {
+            $bgData = json_decode(auth()->user()->chat_background_color, true);
+            if ($bgData && isset($bgData['type'])) {
+                $adminBackground = [
+                    'type' => $bgData['type'] ?? 'solid',
+                    'color' => $bgData['color'] ?? '#6366f1',
+                    'gradient' => $bgData['gradient'] ?? null
+                ];
+            }
+        }
+
         return Inertia::render('Admin/Dashboard', $this->addFooterDataToResponse([
             'stats' => $stats,
             'ip_security_stats' => $ipSecurityStats,
             'system_health' => $systemHealth,
             'notification_stats' => $notificationStats,
+            'admin_background' => $adminBackground,
         ]));
     }
 }
