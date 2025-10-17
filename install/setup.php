@@ -708,12 +708,12 @@ function runAllMigrations($pdo) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
         // User Background Management (v1.2.1)
-        '0015_01_01_000000_create_user_backgrounds_table' => "
+'0015_01_01_000000_create_user_backgrounds_table' => "
             CREATE TABLE IF NOT EXISTS user_backgrounds (
                 id bigint unsigned AUTO_INCREMENT PRIMARY KEY,
                 user_id bigint unsigned NOT NULL,
                 active_type enum('solid','gradient','image') DEFAULT 'solid',
-                solid_color varchar(7) DEFAULT '#f3f4f6',
+                solid_color varchar(20) NULL,
                 gradient_value text NULL,
                 image_url varchar(255) NULL,
                 image_size enum('cover','contain','auto','100% 100%') DEFAULT 'cover',
