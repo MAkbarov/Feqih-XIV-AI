@@ -443,6 +443,7 @@ function runAllMigrations($pdo) {
                 embedding_model varchar(255) NULL,
                 embedding_base_url varchar(255) NULL,
                 embedding_dimension int NULL,
+                custom_params longtext NULL,
                 is_active tinyint(1) DEFAULT 0,
                 created_at timestamp NULL,
                 updated_at timestamp NULL
