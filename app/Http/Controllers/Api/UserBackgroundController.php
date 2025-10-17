@@ -149,9 +149,9 @@ class UserBackgroundController extends Controller
                         'current_active_type' => $background->active_type
                     ]);
                     
-                    // Reset to transparent solid to respect theme (and enum constraint)
+                    // Reset to transparent via null (DB-safe), frontend treats null as transparent
                     $updateData['active_type'] = 'solid';
-                    $updateData['solid_color'] = 'transparent';
+                    $updateData['solid_color'] = null;
                     $updateData['gradient_value'] = null;
                     $updateData['image_url'] = null;
                     $updateData['image_size'] = 'cover'; // Default instead of NULL

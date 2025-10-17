@@ -23,7 +23,7 @@ const applyBackgroundFromSettings = (settings) => {
     
     switch (settings.type) {
         case 'solid':
-            backgroundStyle = settings.color;
+            backgroundStyle = settings.color || 'transparent';
             break;
         case 'gradient':
             backgroundStyle = settings.gradient;
