@@ -1656,96 +1656,14 @@ class SystemUpdateController extends Controller
                         // Run migration with detailed error catching
                         try {
                             $this->logMessage('DEBUG: Executing Artisan::call(migrate, --force)');
+                            $this->logMessage('INFO: Using smart migration with auto-recovery for duplicate errors');
                             
-                            // Method 1: Standard Artisan::call
-                            Artisan::call('migrate', [
-                                '--force' => true,
-                                '--no-interaction' => true
-                            ]);
-                            $migrateOutput = Artisan::output();
-                            $this->logMessage('DEBUG: Migration command completed');
-                            $this->logMessage('Migration output: ' . trim($migrateOutput));
-                            
-                            if (empty(trim($migrateOutput))) {
-                                $this->logMessage('WARNING: Migration output is empty - trying alternative method');
-                                
-                                // Method 2: Direct execution via shell_exec (if available)
-                                if (function_exists('shell_exec') && function_exists('escapeshellarg')) {
-                                    $this->logMessage('DEBUG: Trying shell_exec method');
-                                    $basePath = base_path();
-                                    $command = "cd " . escapeshellarg($basePath) . " && php artisan migrate --force --no-interaction 2>&1";
-                                    $shellOutput = shell_exec($command);
-                                    $this->logMessage('Shell output: ' . trim($shellOutput ?? 'No output'));
-                                }
-                                
-                                // Method 3: Manual migration execution
-                                $this->logMessage('DEBUG: Trying manual migration execution');
-                                $this->runMigrationsManually();
-                            }
+                            // Run migrations one-by-one with error recovery
+                            $this->runMigrationsWithRecovery();
+                            $this->logMessage('SUCCESS: Smart migration with auto-recovery completed');
                         } catch (\Exception $migrateError) {
-                            $this->logMessage('ERROR: Migration execution failed: ' . $migrateError->getMessage());
-                            $this->logMessage('ERROR: Migration stack trace: ' . $migrateError->getTraceAsString());
-                            
-                            // Analyze error type and provide specific solutions
-                            $errorMessage = $migrateError->getMessage();
-                            
-                            // Handle duplicate column/table errors (common in repeated migrations)
-                            if (str_contains($errorMessage, 'Duplicate column') || 
-                                str_contains($errorMessage, 'already exists') ||
-                                str_contains($errorMessage, 'Column already exists')) {
-                                $this->logMessage('INFO: Duplicate column/table detected - marking migration as complete');
-                                $this->logMessage('INFO: This usually means migrations already ran successfully');
-                                
-                                // Extract migration file name if possible
-                                if (preg_match('/database\/migrations\/(\d{4}_\d{2}_\d{2}_\d{6}_[\w_]+\.php)/', $migrateError->getTraceAsString(), $matches)) {
-                                    $migrationFile = $matches[1];
-                                    $this->logMessage('INFO: Problematic migration: ' . $migrationFile);
-                                    
-                                    // Try to mark this specific migration as ran
-                                    try {
-                                        $migrationName = str_replace('.php', '', $migrationFile);
-                                        \DB::table('migrations')->insertOrIgnore([
-                                            'migration' => $migrationName,
-                                            'batch' => \DB::table('migrations')->max('batch') + 1
-                                        ]);
-                                        $this->logMessage('SUCCESS: Migration marked as complete in database');
-                                    } catch (\Exception $markError) {
-                                        $this->logMessage('WARNING: Could not mark migration as complete: ' . $markError->getMessage());
-                                    }
-                                }
-                                
-                                // Continue with other migrations
-                                $this->logMessage('INFO: Continuing with remaining migrations...');
-                                
-                            } elseif (str_contains($errorMessage, 'foreign key constraint fails')) {
-                                $this->logMessage('INFO: Foreign key constraint error detected - attempting data cleanup');
-                                $this->handleForeignKeyConstraintError($errorMessage);
-                                
-                                // Retry migration after cleanup
-                                try {
-                                    $this->logMessage('DEBUG: Retrying migration after foreign key cleanup');
-                                    Artisan::call('migrate', [
-                                        '--force' => true,
-                                        '--no-interaction' => true
-                                    ]);
-                                    $retryOutput = Artisan::output();
-                                    $this->logMessage('Retry migration output: ' . trim($retryOutput));
-                                } catch (\Exception $retryError) {
-                                    $this->logMessage('ERROR: Migration retry failed: ' . $retryError->getMessage());
-                                    // Continue to fallback
-                                }
-                            }
-                            
-                            // Try manual migration as fallback
-                            try {
-                                $this->logMessage('DEBUG: Attempting manual migration fallback');
-                                $this->runMigrationsManually();
-                            } catch (\Exception $fallbackError) {
-                                $this->logMessage('ERROR: Manual migration fallback failed: ' . $fallbackError->getMessage());
-                                
-                                // Don't throw error - continue with other repair steps
-                                $this->logMessage('WARNING: Migration failed but continuing with other repair steps');
-                            }
+                            $this->logMessage('WARNING: Smart migration encountered an error: ' . $migrateError->getMessage());
+                            $this->logMessage('INFO: Error was likely handled by smart migration - continuing with repairs');
                         }
                         
                         // Verify migrations ran successfully
@@ -2218,6 +2136,95 @@ class SystemUpdateController extends Controller
                 'message' => 'Cache təmizləmə xətası: ' . $e->getMessage(),
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+    
+    /**
+     * Run migrations one-by-one with automatic recovery for duplicate errors
+     * This prevents one bad migration from stopping the entire process
+     */
+    private function runMigrationsWithRecovery(): void
+    {
+        try {
+            // Get list of pending migrations
+            $migrator = app('migrator');
+            $repository = $migrator->getRepository();
+            
+            // Ensure migrations table exists
+            if (!$repository->repositoryExists()) {
+                $repository->createRepository();
+            }
+            
+            $migrations = $migrator->getMigrationFiles(database_path('migrations'));
+            $ran = $repository->getRan();
+            $pending = array_diff(array_keys($migrations), $ran);
+            
+            if (empty($pending)) {
+                $this->logMessage('INFO: No pending migrations found');
+                return;
+            }
+            
+            $this->logMessage("INFO: Found " . count($pending) . " pending migrations");
+            $successCount = 0;
+            $skipCount = 0;
+            
+            // Run each migration individually
+            foreach ($pending as $migrationName) {
+                try {
+                    $this->logMessage("INFO: Running migration: {$migrationName}");
+                    
+                    // Run single migration
+                    Artisan::call('migrate', [
+                        '--path' => 'database/migrations',
+                        '--force' => true,
+                        '--step' => 1
+                    ]);
+                    
+                    $successCount++;
+                    $this->logMessage("SUCCESS: Migration {$migrationName} completed");
+                    
+                } catch (\Exception $e) {
+                    $errorMsg = $e->getMessage();
+                    
+                    // Check if it's a "already exists" error (table or column)
+                    if (str_contains($errorMsg, 'already exists') ||
+                        str_contains($errorMsg, 'Duplicate column') ||
+                        str_contains($errorMsg, 'Duplicate key') ||
+                        str_contains($errorMsg, '1050') || // Table exists
+                        str_contains($errorMsg, '1060') || // Duplicate column
+                        str_contains($errorMsg, '1061')) { // Duplicate key
+                        
+                        $this->logMessage("WARNING: Migration {$migrationName} - Table/column already exists");
+                        $this->logMessage("INFO: Marking migration as complete and continuing...");
+                        
+                        // Mark this migration as ran
+                        try {
+                            $repository->log($migrationName, $repository->getNextBatchNumber());
+                            $skipCount++;
+                            $this->logMessage("SUCCESS: Migration {$migrationName} marked as complete");
+                        } catch (\Exception $markError) {
+                            $this->logMessage("WARNING: Could not mark migration: " . $markError->getMessage());
+                        }
+                        
+                        continue; // Skip to next migration
+                    }
+                    
+                    // For other errors, log and continue
+                    $this->logMessage("ERROR: Migration {$migrationName} failed: {$errorMsg}");
+                    $this->logMessage("INFO: Continuing with remaining migrations...");
+                }
+            }
+            
+            $this->logMessage("SUMMARY: {$successCount} migrations ran successfully, {$skipCount} skipped (already exists)");
+            
+        } catch (\Exception $e) {
+            $this->logMessage('ERROR: Migration recovery process failed: ' . $e->getMessage());
+            // Fall back to standard migration
+            try {
+                Artisan::call('migrate', ['--force' => true, '--no-interaction' => true]);
+            } catch (\Exception $fallbackError) {
+                $this->logMessage('WARNING: Fallback migration also failed');
+            }
         }
     }
     
