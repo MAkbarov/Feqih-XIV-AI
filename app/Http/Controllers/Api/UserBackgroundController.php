@@ -76,7 +76,7 @@ class UserBackgroundController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'type' => 'required|in:solid,gradient,image,default',
+            'type' => 'required|in:solid,gradient,image,default', // 'default' is handled as transparent solid
             'color' => 'nullable|string',
             'gradient' => 'nullable|string',
             'image' => 'nullable|string',
@@ -149,9 +149,9 @@ class UserBackgroundController extends Controller
                         'current_active_type' => $background->active_type
                     ]);
                     
-                    // Reset everything to default transparent background
-                    $updateData['active_type'] = 'default';
-                    $updateData['solid_color'] = null;
+                    // Reset to transparent solid to respect theme (and enum constraint)
+                    $updateData['active_type'] = 'solid';
+                    $updateData['solid_color'] = 'transparent';
                     $updateData['gradient_value'] = null;
                     $updateData['image_url'] = null;
                     $updateData['image_size'] = 'cover'; // Default instead of NULL

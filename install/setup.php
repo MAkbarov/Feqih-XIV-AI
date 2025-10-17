@@ -570,7 +570,7 @@ function runAllMigrations($pdo) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
         // Knowledge base
-        '0009_01_01_000000_create_knowledge_base_table' => "
+'0009_01_01_000000_create_knowledge_base_table' => "
             CREATE TABLE IF NOT EXISTS knowledge_base (
                 id bigint unsigned AUTO_INCREMENT PRIMARY KEY,
                 title varchar(512) NOT NULL,
@@ -586,6 +586,22 @@ function runAllMigrations($pdo) {
                 created_at timestamp NULL,
                 updated_at timestamp NULL,
                 INDEX idx_kb_source_url (source_url(255))
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+        // Knowledge base chunks (RAG)
+        '0009_01_01_000002_create_knowledge_base_chunks_table' => "
+            CREATE TABLE IF NOT EXISTS knowledge_base_chunks (
+                id bigint unsigned AUTO_INCREMENT PRIMARY KEY,
+                knowledge_base_id bigint unsigned NOT NULL,
+                content longtext NOT NULL,
+                char_count int NOT NULL,
+                chunk_index int DEFAULT 0,
+                vector_id varchar(255) NULL,
+                created_at timestamp NULL,
+                updated_at timestamp NULL,
+                INDEX kb_chunks_kb_idx (knowledge_base_id, chunk_index),
+                INDEX kb_chunks_vector_idx (vector_id),
+                CONSTRAINT fk_kb_chunks_kb FOREIGN KEY (knowledge_base_id) REFERENCES knowledge_base(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
         // Knowledge categories

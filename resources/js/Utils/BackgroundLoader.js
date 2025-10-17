@@ -49,7 +49,7 @@ const applyBackgroundFromSettings = (settings) => {
             }
             break;
         default:
-            backgroundStyle = '#f3f4f6';
+            backgroundStyle = 'transparent';
     }
     
     console.log('BackgroundLoader: Applying background style:', backgroundStyle);

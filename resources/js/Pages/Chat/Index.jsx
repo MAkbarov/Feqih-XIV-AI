@@ -1022,7 +1022,7 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
   return (
     <div className={`${fullTheme.isDarkMode ? 'dark' : ''}`}>
       <div
-        className="h-screen flex flex-col overflow-x-hidden"
+        className="min-h-screen flex flex-col overflow-x-hidden"
         style={{
           background: fullTheme.isDarkMode
             ? (theme?.dark_background_gradient || 'linear-gradient(135deg, #1f2937 0%, #111827 100%)')
@@ -1033,7 +1033,7 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
       >
       <Head title={`Əsas səhifə - ${siteName || 'AI Chatbot Platform'}`} />
 
-      <div className="w-full px-4 md:px-4 lg:px-6 py-4 md:py-4 lg:py-6 flex-1 flex flex-col min-h-0">
+      <div className="w-full px-4 md:px-4 lg:px-6 py-4 md:py-4 lg:py-6 flex-1 flex flex-col min-h-0 pb-24">
         
         <motion.header 
           initial={{ opacity: 0, y: -20 }}
