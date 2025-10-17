@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /_debugbar
+Disallow: /api/test*
+Disallow: /storage/logs
+
+# Sitemap
+Sitemap: http://localhost:8000/sitemap.xml

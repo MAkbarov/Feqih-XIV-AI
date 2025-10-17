@@ -1,0 +1,562 @@
+
+/* Global dark mode overrides for legacy cards */
+.dark .bg-white { background-color: #1f2937 !important; }
+.dark .bg-gray-50 { background-color: #374151 !important; }
+.dark .border-gray-200 { border-color: #4b5563 !important; }
+.dark .text-gray-700 { color: #e5e7eb !important; }
+.dark .text-gray-600 { color: #e5e7eb !important; }
+
+/* Donation page dark mode prose overrides */
+.dark .prose p,
+.dark .prose strong,
+.dark .prose em,
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose h5,
+.dark .prose h6,
+.dark .prose span,
+.dark .prose div,
+.dark .prose a,
+.dark .prose ul,
+.dark .prose ol,
+.dark .prose li,
+.dark .prose blockquote,
+.dark .prose code {
+    color: #ffffff !important;
+}
+
+/* Modal dark mode background overrides */
+.dark .modal-overlay {
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.85) 0%, rgba(17, 24, 39, 0.9) 100%) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.dark .modal-content {
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.98) 100%) !important;
+    color: #ffffff !important;
+    border-color: rgba(107, 114, 128, 0.5) !important;
+}
+
+/* Preview panel dark mode */
+.dark .preview-panel {
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.98) 100%) !important;
+    color: #ffffff !important;
+    border-color: rgba(107, 114, 128, 0.6) !important;
+}
+
+/* Force white text in dark mode for all donation content */
+.dark .donation-content *,
+.dark .donation-preview *,
+.dark .donation-modal *,
+.dark .modal-content *,
+.dark .modal-overlay .modal-content * {
+    color: #ffffff !important;
+}
+
+/* Force dark mode modal styling */
+.dark .modal-overlay {
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.85) 0%, rgba(17, 24, 39, 0.9) 100%) !important;
+}
+
+.dark .modal-content {
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.98) 100%) !important;
+    color: #ffffff !important;
+}
+
+/* Debug modal dark mode */
+.debug-modal-dark {
+    background: red !important;
+    color: yellow !important;
+    border: 3px solid lime !important;
+}
+
+/* Body donation navigation styles */
+.donation-body-nav {
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+@media (max-width: 768px) {
+    .donation-body-nav .donation-display {
+        margin: 1rem;
+        border-radius: 1rem !important;
+    }
+}
+
+/* Smooth slide in animation for body donation */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.donation-body-nav .donation-display {
+    animation: slideInUp 0.6s ease-out;
+}
+
+@import url('https://fonts.bunny.net/css?family=archivo-narrow:400,500');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Inline image styles for HTML content */
+.footer-content img,
+.preview-content img {
+    display: inline !important;
+    vertical-align: middle;
+    max-height: 24px;
+    width: auto;
+    margin: 0 2px;
+}
+
+/* Better textarea scrolling */
+.glass-input {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.glass-input::-webkit-scrollbar {
+    width: 6px;
+}
+
+.glass-input::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.glass-input::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+}
+
+.glass-input::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.7);
+}
+
+/* Global font family */
+html, body, button, input, select, textarea {
+    font-family: 'Archivo Narrow', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    font-weight: 500;
+}
+
+/* Custom scrollbar hiding for mobile tabs */
+.no-scrollbar {
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    scrollbar-width: none; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+}
+
+/* Modal overlay styling - backdrop blur applied to overlay itself */
+
+/* CSS Variables for Dynamic Theming */
+:root {
+    --primary-color: #6366F1;
+    --secondary-color: #EC4899;
+    --accent-color: #fbbf24;
+    --text-color: #1f2937;
+    --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Dynamic Theme Classes */
+.theme-primary-bg {
+    background-color: var(--primary-color);
+}
+
+.theme-secondary-bg {
+    background-color: var(--secondary-color);
+}
+
+.theme-accent-bg {
+    background-color: var(--accent-color);
+}
+
+.theme-primary-text {
+    color: var(--primary-color);
+}
+
+.theme-secondary-text {
+    color: var(--secondary-color);
+}
+
+.theme-accent-text {
+    color: var(--accent-color);
+}
+
+.theme-gradient-bg {
+    background: var(--background-gradient);
+}
+
+.theme-border-primary {
+    border-color: var(--primary-color);
+}
+
+/* Toast Animations */
+@keyframes toast-progress {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+.animate-toast-progress {
+    animation: toast-progress linear;
+}
+
+/* Glassmorphism Styles */
+.glassmorphism-border {
+    box-shadow: 
+        0 8px 32px 0 rgba(31, 38, 135, 0.37),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.glassmorphism {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 8px 32px 0 rgba(31, 38, 135, 0.37),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.glassmorphism-dark {
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+        inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Modern Input Styles */
+.glass-input {
+    @apply glassmorphism;
+    @apply px-4 py-3;
+    @apply rounded-xl;
+    @apply border-0;
+    @apply text-gray-800 placeholder-gray-500;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500/50;
+    @apply transition-all duration-200;
+    @apply shadow-lg;
+}
+
+.glass-input:focus {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.glass-input-dark {
+    @apply glassmorphism-dark;
+    @apply px-4 py-3;
+    @apply rounded-xl;
+    @apply border-0;
+    @apply text-white placeholder-gray-300;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-400/50;
+    @apply transition-all duration-200;
+    @apply shadow-lg;
+}
+
+.glass-input-dark:focus {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Toast Container */
+.toast-container {
+    pointer-events: none;
+}
+
+.toast-container > * {
+    pointer-events: auto;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--primary-color, #6366F1);
+    border-radius: 8px;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color, #EC4899);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* For Firefox */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color, #6366F1) rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile Element Size Reduction - 15-20% smaller on mobile */
+@media (max-width: 767px) {
+    /* Text sizes */
+    .text-xs { font-size: 0.65rem; /* was 0.75rem */ }
+    .text-sm { font-size: 0.8rem; /* was 0.875rem */ }
+    .text-base { font-size: 0.85rem; /* was 1rem */ }
+    .text-lg { font-size: 0.95rem; /* was 1.125rem */ }
+    .text-xl { font-size: 1.05rem; /* was 1.25rem */ }
+    .text-2xl { font-size: 1.3rem; /* was 1.5rem */ }
+    .text-3xl { font-size: 1.6rem; /* was 1.875rem */ }
+    
+    /* Padding reductions */
+    .p-1 { padding: 0.2rem; /* was 0.25rem */ }
+    .p-2 { padding: 0.4rem; /* was 0.5rem */ }
+    .p-3 { padding: 0.6rem; /* was 0.75rem */ }
+    .p-4 { padding: 0.8rem; /* was 1rem */ }
+    .p-6 { padding: 1.2rem; /* was 1.5rem */ }
+    .p-8 { padding: 1.6rem; /* was 2rem */ }
+    
+    .px-2 { padding-left: 0.4rem; padding-right: 0.4rem; }
+    .px-3 { padding-left: 0.6rem; padding-right: 0.6rem; }
+    .px-4 { padding-left: 0.8rem; padding-right: 0.8rem; }
+    .py-2 { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+    .py-3 { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+    
+    /* Margin reductions */
+    .m-2 { margin: 0.4rem; }
+    .m-3 { margin: 0.6rem; }
+    .m-4 { margin: 0.8rem; }
+    .mb-2 { margin-bottom: 0.4rem; }
+    .mb-3 { margin-bottom: 0.6rem; }
+    .mb-4 { margin-bottom: 0.8rem; }
+    .mb-6 { margin-bottom: 1.2rem; }
+    .mb-8 { margin-bottom: 1.6rem; }
+    
+    /* Gap reductions */
+    .gap-1 { gap: 0.2rem; }
+    .gap-2 { gap: 0.4rem; }
+    .gap-3 { gap: 0.6rem; }
+    .gap-4 { gap: 0.8rem; }
+    
+    /* Border radius reductions */
+    .rounded-lg { border-radius: 0.4rem; /* was 0.5rem */ }
+    .rounded-xl { border-radius: 0.6rem; /* was 0.75rem */ }
+    .rounded-2xl { border-radius: 0.8rem; /* was 1rem */ }
+    
+    /* Shadow reductions */
+    .shadow-lg { box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    .shadow-xl { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+    
+    /* Button and input height reductions */
+    .min-h-60px { min-height: 50px !important; }
+    .min-h-70px { min-height: 60px !important; }
+    
+    /* Modal and card reductions - specific class targeting */
+    [class*="max-w-"][class*="90%"] { max-width: 85% !important; }
+    [class*="max-w-"][class*="85%"] { max-width: 80% !important; }
+}
+
+/* Custom Select Styling */
+select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3e%3c/path%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 40px;
+}
+
+.custom-select {
+    @apply relative;
+}
+
+.custom-select select {
+    @apply w-full px-4 py-3 pr-10 bg-white border-2 border-gray-200 rounded-xl;
+    @apply text-gray-700 font-medium transition-all duration-200;
+    @apply focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200;
+    @apply hover:border-gray-300;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2310B981'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'%3e%3c/path%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px;
+    appearance: none;
+}
+
+.custom-select select:focus {
+    @apply shadow-lg transform scale-105;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23059669'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M19 9l-7 7-7-7'%3e%3c/path%3e%3c/svg%3e");
+}
+
+/* Custom Checkbox Styling */
+input[type="checkbox"] {
+    @apply appearance-none w-5 h-5 border-2 border-gray-300 rounded-md;
+    @apply bg-white checked:bg-emerald-500 checked:border-emerald-500;
+    @apply focus:ring-2 focus:ring-emerald-200 focus:ring-offset-1;
+    @apply transition-all duration-200 cursor-pointer;
+    @apply hover:border-emerald-400;
+    background-image: none;
+}
+
+input[type="checkbox"]:checked {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23FFFFFF'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7'%3e%3c/path%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 16px;
+}
+
+input[type="checkbox"]:checked:hover {
+    @apply bg-emerald-600 transform scale-110;
+}
+
+/* Toggle Switch Styling */
+.toggle-switch {
+    @apply relative inline-flex items-center cursor-pointer;
+}
+
+.toggle-switch input[type="checkbox"] {
+    @apply sr-only;
+}
+
+.toggle-switch .slider {
+    @apply relative w-11 h-6 bg-gray-200 rounded-full transition-all duration-300;
+    @apply peer-focus:ring-2 peer-focus:ring-emerald-300;
+    @apply peer-checked:bg-emerald-500;
+}
+
+.toggle-switch .slider:before {
+    @apply absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-all duration-300;
+    @apply peer-checked:translate-x-5;
+    content: '';
+}
+
+.toggle-switch input:checked + .slider {
+    @apply bg-emerald-500 shadow-lg;
+}
+
+.toggle-switch input:checked + .slider:before {
+    @apply transform translate-x-5;
+}
+
+/* Radio Button Styling */
+input[type="radio"] {
+    @apply appearance-none w-5 h-5 border-2 border-gray-300 rounded-full;
+    @apply bg-white checked:bg-emerald-500 checked:border-emerald-500;
+    @apply focus:ring-2 focus:ring-emerald-200 focus:ring-offset-1;
+    @apply transition-all duration-200 cursor-pointer;
+    @apply hover:border-emerald-400;
+}
+
+input[type="radio"]:checked {
+    @apply relative;
+}
+
+input[type="radio"]:checked:after {
+    content: '';
+    @apply absolute top-1/2 left-1/2 w-2 h-2 bg-white rounded-full;
+    @apply transform -translate-x-1/2 -translate-y-1/2;
+}
+
+/* Improved Scrollbar Styling */
+.enhanced-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.enhanced-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+}
+
+.enhanced-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, var(--primary-color, #10B981), var(--secondary-color, #059669));
+    border-radius: 10px;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.enhanced-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, var(--accent-color, #F59E0B), var(--primary-color, #10B981));
+    transform: scale(1.1);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
+}
+
+/* Global input text colors in dark mode */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="search"],
+.dark input[type="url"],
+.dark input[type="tel"],
+.dark textarea,
+.dark select {
+    color: #f9fafb !important;
+}
+
+.dark ::placeholder {
+    color: #cbd5e1 !important;
+}
+
+/* Dropdown animation */
+@keyframes dropdown-show {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-dropdown { animation: dropdown-show .15s ease-out both; }
+
+/* Dark mode scrollbar */
+.dark .enhanced-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.dark .enhanced-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #374151, #4B5563);
+}
+
+.dark .enhanced-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #6B7280, #9CA3AF);
+}
+
+/* For Firefox enhanced scrollbars */
+.enhanced-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color, #10B981) rgba(255, 255, 255, 0.1);
+}
+
+/* Apply enhanced scrollbar to common containers */
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto {
+    @apply enhanced-scrollbar;
+}

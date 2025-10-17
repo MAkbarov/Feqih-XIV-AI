@@ -1,0 +1,1 @@
+import{j as n}from"./markdown-BUCLRvA3.js";function l({message:t,className:r="",...e}){return t?n.jsx("p",{...e,className:"text-sm text-red-600 "+r,children:t}):null}function o({value:t,className:r="",children:e,...s}){return n.jsx("label",{...s,className:"block text-sm font-medium text-gray-700 "+r,children:t||e})}export{o as I,l as a};

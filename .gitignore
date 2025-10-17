@@ -1,0 +1,77 @@
+# Laravel
+/node_modules
+#/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+/.fleet
+/.idea
+/.vscode
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+/storage/logs/*
+
+# Cache
+/bootstrap/cache/*.php
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# Testing
+.phpunit.cache
+/tests/Results/
+coverage.xml
+*.coverage
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Composer
+/vendor/
+composer.phar
+composer.lock
+
+# NPM
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Development and temporary files
+*.zip
+XIV-AI-*.zip
+create-hosting-update.ps1
+
+# Test and diagnostic scripts (development only)
+check_*.php
+test_*.php
+
+# Always include application source
+!/app/
+!/app/**

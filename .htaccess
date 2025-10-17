@@ -1,0 +1,48 @@
+# Root .htaccess for shared hosting (no SSH) to run Laravel from project root by forwarding to /public
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1) Allow direct access to real files/dirs (e.g., .well-known)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 2) If request already targets /public, do nothing
+    RewriteCond %{REQUEST_URI} ^/public/
+    RewriteRule ^ - [L]
+
+    # 3) Root request -> public/index.php (reliable on hosts without DirectoryIndex php)
+    RewriteRule ^$ public/index.php [L]
+
+    # 4) Everything else -> mirror path under /public (assets, front controller)
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Minimal security headers (optional)
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Block access to internal directories if directly exposed
+RedirectMatch 404 /\.(git|svn)(/.*)?$
+RedirectMatch 404 ^/(app|bootstrap|config|database|storage|routes|resources|tests)/.*$
+
+# Basic compression and cache hints
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>

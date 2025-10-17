@@ -1,0 +1,47 @@
+# Development files
+node_modules/
+.git/
+.gitignore
+.gitattributes
+
+# Build tools
+build-production.bat
+.zipignore
+
+# Environment files
+.env
+.env.backup
+.env.hosting
+
+# Development dependencies
+package-lock.json
+composer.lock
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and temp
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/temp/*
+storage/backups/*
+storage/installed.lock
+
+# Test files
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# Development scripts
+*.bat
+*.sh
