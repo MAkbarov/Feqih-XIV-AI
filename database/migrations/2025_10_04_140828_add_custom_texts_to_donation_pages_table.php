@@ -12,7 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('donation_pages', function (Blueprint $table) {
-            $table->json('custom_texts')->nullable()->after('payment_methods');
+            // Check if column already exists to prevent duplicate column error
+            if (!Schema::hasColumn('donation_pages', 'custom_texts')) {
+                $table->json('custom_texts')->nullable()->after('payment_methods');
+            }
         });
     }
 
@@ -22,7 +25,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('donation_pages', function (Blueprint $table) {
-            $table->dropColumn('custom_texts');
+            // Only drop if column exists
+            if (Schema::hasColumn('donation_pages', 'custom_texts')) {
+                $table->dropColumn('custom_texts');
+            }
         });
     }
 };

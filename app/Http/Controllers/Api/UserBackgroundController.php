@@ -34,10 +34,15 @@ class UserBackgroundController extends Controller
         ]);
 
         // Parse user's background settings from the new structure
+        // If solid_color is null (reset to default), return 'default' type so frontend uses design defaults
+        $type = $background->active_type ?? 'solid';
+        if ($type === 'solid' && $background->solid_color === null) {
+            $type = 'default';
+        }
+        
         $settings = [
-            'type' => $background->active_type ?? 'solid',
-            // If solid_color is null (reset), treat as transparent so dark mode works
-            'color' => $background->solid_color ?? 'transparent',
+            'type' => $type,
+            'color' => $background->solid_color,
             'gradient' => $background->gradient_value ?? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             'image' => $background->image_url,
             'imageSize' => $background->image_size ?? 'cover',

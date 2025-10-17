@@ -1689,7 +1689,35 @@ class SystemUpdateController extends Controller
                             // Analyze error type and provide specific solutions
                             $errorMessage = $migrateError->getMessage();
                             
-                            if (str_contains($errorMessage, 'foreign key constraint fails')) {
+                            // Handle duplicate column/table errors (common in repeated migrations)
+                            if (str_contains($errorMessage, 'Duplicate column') || 
+                                str_contains($errorMessage, 'already exists') ||
+                                str_contains($errorMessage, 'Column already exists')) {
+                                $this->logMessage('INFO: Duplicate column/table detected - marking migration as complete');
+                                $this->logMessage('INFO: This usually means migrations already ran successfully');
+                                
+                                // Extract migration file name if possible
+                                if (preg_match('/database\/migrations\/(\d{4}_\d{2}_\d{2}_\d{6}_[\w_]+\.php)/', $migrateError->getTraceAsString(), $matches)) {
+                                    $migrationFile = $matches[1];
+                                    $this->logMessage('INFO: Problematic migration: ' . $migrationFile);
+                                    
+                                    // Try to mark this specific migration as ran
+                                    try {
+                                        $migrationName = str_replace('.php', '', $migrationFile);
+                                        \DB::table('migrations')->insertOrIgnore([
+                                            'migration' => $migrationName,
+                                            'batch' => \DB::table('migrations')->max('batch') + 1
+                                        ]);
+                                        $this->logMessage('SUCCESS: Migration marked as complete in database');
+                                    } catch (\Exception $markError) {
+                                        $this->logMessage('WARNING: Could not mark migration as complete: ' . $markError->getMessage());
+                                    }
+                                }
+                                
+                                // Continue with other migrations
+                                $this->logMessage('INFO: Continuing with remaining migrations...');
+                                
+                            } elseif (str_contains($errorMessage, 'foreign key constraint fails')) {
                                 $this->logMessage('INFO: Foreign key constraint error detected - attempting data cleanup');
                                 $this->handleForeignKeyConstraintError($errorMessage);
                                 

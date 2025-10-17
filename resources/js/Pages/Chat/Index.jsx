@@ -418,57 +418,56 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
     // Ensure chat container is rendered before loading background
     const timer = setTimeout(() => {
       loadUserBackground(!!auth?.user);
-      
-      // Retry if first attempt fails
-      setTimeout(() => {
-        const chatContainer = document.querySelector('#chat-container, [data-chat-background]');
-        if (chatContainer && !chatContainer.style.backgroundImage && !chatContainer.style.background) {
-          console.log('Chat background retry - first attempt may have failed');
-          loadUserBackground(!!auth?.user);
-        }
-      }, 1000);
-    }, 500);
+    }, 200);
     
     // Listen for background changes from settings modal
     const handleBackgroundChange = (event) => {
+      const chatContainer = document.querySelector('#chat-container, [data-chat-background]');
+      if (!chatContainer) return;
+      
+      // Handle default/reset case (no background or type is 'default')
+      if (!event.detail || !event.detail.type || event.detail.type === 'default') {
+        console.log('Chat listener: Clearing all background styles for default');
+        chatContainer.style.removeProperty('background');
+        chatContainer.style.removeProperty('background-image');
+        chatContainer.style.removeProperty('background-color');
+        chatContainer.style.removeProperty('background-size');
+        chatContainer.style.removeProperty('background-position');
+        chatContainer.style.removeProperty('background-repeat');
+        chatContainer.style.removeProperty('background-attachment');
+        chatContainer.style.removeProperty('background-origin');
+        chatContainer.style.removeProperty('background-clip');
+        return;
+      }
+      
       // Apply background immediately if data is provided in event
-      if (event.detail && event.detail.background) {
-        const chatContainer = document.querySelector('#chat-container, [data-chat-background]');
-        if (chatContainer) {
-          if (event.detail.type === 'image') {
-            chatContainer.style.backgroundImage = event.detail.background;
-            chatContainer.style.backgroundSize = event.detail.imageSize || 'cover';
-            chatContainer.style.backgroundPosition = event.detail.imagePosition || 'center';
-            chatContainer.style.backgroundRepeat = 'no-repeat';
-            chatContainer.style.backgroundColor = '';
-          } else {
-            chatContainer.style.backgroundImage = '';
-            chatContainer.style.backgroundSize = '';
-            chatContainer.style.backgroundPosition = '';
-            chatContainer.style.backgroundRepeat = '';
-            
-            if (event.detail.type === 'gradient') {
-              // For gradients, use background property
-              chatContainer.style.background = event.detail.background;
-              chatContainer.style.backgroundColor = ''; // Clear any solid color
-            } else if (event.detail.type === 'solid') {
-              // For solid colors, completely clear all gradient properties
-              chatContainer.style.setProperty('background', 'none', 'important');
-              chatContainer.style.setProperty('background-image', 'none', 'important');
-              chatContainer.style.setProperty('background-size', 'auto', 'important');
-              chatContainer.style.setProperty('background-position', '0% 0%', 'important');
-              chatContainer.style.setProperty('background-repeat', 'repeat', 'important');
-              chatContainer.style.setProperty('background-attachment', 'scroll', 'important');
-              chatContainer.style.setProperty('background-origin', 'padding-box', 'important');
-              chatContainer.style.setProperty('background-clip', 'border-box', 'important');
-              chatContainer.style.setProperty('background-color', event.detail.background, 'important');
-              console.log('Chat listener applied solid color:', event.detail.background);
-            } else {
-              // Default fallback
-              chatContainer.style.backgroundColor = event.detail.background;
-              chatContainer.style.background = ''; 
-            }
-          }
+      if (event.detail.background) {
+        if (event.detail.type === 'image') {
+          chatContainer.style.backgroundImage = event.detail.background;
+          chatContainer.style.backgroundSize = event.detail.imageSize || 'cover';
+          chatContainer.style.backgroundPosition = event.detail.imagePosition || 'center';
+          chatContainer.style.backgroundRepeat = 'no-repeat';
+          chatContainer.style.backgroundColor = '';
+        } else if (event.detail.type === 'gradient') {
+          // For gradients, use background property
+          chatContainer.style.backgroundImage = '';
+          chatContainer.style.backgroundSize = '';
+          chatContainer.style.backgroundPosition = '';
+          chatContainer.style.backgroundRepeat = '';
+          chatContainer.style.background = event.detail.background;
+          chatContainer.style.backgroundColor = '';
+        } else if (event.detail.type === 'solid') {
+          // For solid colors, completely clear all gradient properties
+          chatContainer.style.setProperty('background', 'none', 'important');
+          chatContainer.style.setProperty('background-image', 'none', 'important');
+          chatContainer.style.setProperty('background-size', 'auto', 'important');
+          chatContainer.style.setProperty('background-position', '0% 0%', 'important');
+          chatContainer.style.setProperty('background-repeat', 'repeat', 'important');
+          chatContainer.style.setProperty('background-attachment', 'scroll', 'important');
+          chatContainer.style.setProperty('background-origin', 'padding-box', 'important');
+          chatContainer.style.setProperty('background-clip', 'border-box', 'important');
+          chatContainer.style.setProperty('background-color', event.detail.background, 'important');
+          console.log('Chat listener applied solid color:', event.detail.background);
         }
       }
       
@@ -1039,7 +1038,7 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="mb-4 md:mb-6 flex flex-wrap items-center justify-between bg-gradient-to-r from-white/95 via-white/90 to-white/95 dark:from-gray-800/95 dark:via-gray-800/90 dark:to-gray-800/95 backdrop-blur-xl rounded-3xl p-4 md:p-6 shadow-2xl shadow-purple-500/10 dark:shadow-purple-500/20 w-full border border-white/20 dark:border-gray-700/50 hover:shadow-3xl transition-all duration-300"
+          className="mb-4 md:mb-6 flex flex-wrap items-center justify-between bg-gradient-to-r from-white/80 via-white/85 to-white/80 dark:from-gray-800/80 dark:via-gray-800/85 dark:to-gray-800/80 backdrop-blur-2xl rounded-3xl p-4 md:p-6 shadow-2xl shadow-purple-500/10 dark:shadow-purple-500/20 w-full border border-white/30 dark:border-gray-700/50 hover:shadow-3xl transition-all duration-300"
         >
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
@@ -1323,9 +1322,9 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
                   top-0 left-0
                   h-full
                   w-80 md:w-72 lg:w-80
-                  bg-gradient-to-b from-white via-white to-gray-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900
-                  backdrop-blur-xl
-                  border-r border-gray-200 dark:border-gray-700
+                  bg-gradient-to-b from-white/85 via-white/90 to-gray-50/85 dark:from-gray-800/85 dark:via-gray-800/90 dark:to-gray-900/85
+                  backdrop-blur-2xl
+                  border-r border-gray-200/50 dark:border-gray-700/50
                   rounded-r-3xl md:rounded-3xl
                   z-50 md:z-auto
                   flex flex-col
@@ -1515,16 +1514,18 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
             <main className="w-full max-w-none">
               <div 
                 className={`w-full backdrop-blur-xl border border-emerald-200 dark:border-gray-600 rounded-3xl p-3 md:p-6 flex flex-col shadow-2xl hover:shadow-3xl dark:shadow-purple-500/10 border-white/20 dark:border-gray-700/30 transition-all duration-300 relative ${
-                  chatBackground === 'transparent' ? 'bg-white/95 dark:!bg-gray-800/95' : 'dark:!bg-gray-800/95'
+                  chatBackground === 'transparent' ? '!bg-white dark:!bg-gray-800' : ''
                 }`}
                 data-chat-background="true"
                 id="chat-container"
-                style={{ 
+                style={chatBackground !== 'transparent' ? { 
                   minHeight: 'calc(100vh - 200px)',
-                  background: chatBackground !== 'transparent' ? chatBackground : undefined,
+                  background: chatBackground,
                   backgroundSize: theme?.chat_background_type === 'image' ? 'cover' : undefined,
                   backgroundPosition: theme?.chat_background_type === 'image' ? 'center' : undefined,
                   backgroundRepeat: theme?.chat_background_type === 'image' ? 'no-repeat' : undefined
+                } : {
+                  minHeight: 'calc(100vh - 200px)'
                 }}
               >
               {/* Font size control bubble */}

@@ -21,6 +21,21 @@ const applyBackgroundFromSettings = (settings) => {
 
     let backgroundStyle = '';
     
+    // If type is 'default' or not set, clear all inline styles to use design defaults
+    if (!settings.type || settings.type === 'default') {
+        console.log('BackgroundLoader: Clearing all background styles for default theme');
+        chatContainer.style.removeProperty('background');
+        chatContainer.style.removeProperty('background-image');
+        chatContainer.style.removeProperty('background-color');
+        chatContainer.style.removeProperty('background-size');
+        chatContainer.style.removeProperty('background-position');
+        chatContainer.style.removeProperty('background-repeat');
+        chatContainer.style.removeProperty('background-attachment');
+        chatContainer.style.removeProperty('background-origin');
+        chatContainer.style.removeProperty('background-clip');
+        return; // Exit early - let className handle bg-white/dark:bg-gray-800
+    }
+    
     switch (settings.type) {
         case 'solid':
             backgroundStyle = settings.color || 'transparent';
@@ -49,7 +64,18 @@ const applyBackgroundFromSettings = (settings) => {
             }
             break;
         default:
-            backgroundStyle = 'transparent';
+            // For any other type, clear all styles (same as default)
+            console.log('BackgroundLoader: Unknown type, clearing all background styles');
+            chatContainer.style.removeProperty('background');
+            chatContainer.style.removeProperty('background-image');
+            chatContainer.style.removeProperty('background-color');
+            chatContainer.style.removeProperty('background-size');
+            chatContainer.style.removeProperty('background-position');
+            chatContainer.style.removeProperty('background-repeat');
+            chatContainer.style.removeProperty('background-attachment');
+            chatContainer.style.removeProperty('background-origin');
+            chatContainer.style.removeProperty('background-clip');
+            return;
     }
     
     console.log('BackgroundLoader: Applying background style:', backgroundStyle);
@@ -62,34 +88,26 @@ const applyBackgroundFromSettings = (settings) => {
         chatContainer.style.backgroundRepeat = 'no-repeat';
         // Clear any existing background color
         chatContainer.style.backgroundColor = '';
-    } else {
-        // For solid colors and gradients
+    } else if (settings.type === 'gradient') {
+        // For gradients, use background property
         chatContainer.style.backgroundImage = '';
         chatContainer.style.backgroundSize = '';
         chatContainer.style.backgroundPosition = '';
         chatContainer.style.backgroundRepeat = '';
-        
-        if (settings.type === 'gradient') {
-            // For gradients, use background property
-            chatContainer.style.background = backgroundStyle;
-            chatContainer.style.backgroundColor = ''; // Clear any solid color
-        } else if (settings.type === 'solid') {
-            // For solid colors, completely clear all gradient properties
-            chatContainer.style.setProperty('background', 'none', 'important');
-            chatContainer.style.setProperty('background-image', 'none', 'important');
-            chatContainer.style.setProperty('background-size', 'auto', 'important');
-            chatContainer.style.setProperty('background-position', '0% 0%', 'important');
-            chatContainer.style.setProperty('background-repeat', 'repeat', 'important');
-            chatContainer.style.setProperty('background-attachment', 'scroll', 'important');
-            chatContainer.style.setProperty('background-origin', 'padding-box', 'important');
-            chatContainer.style.setProperty('background-clip', 'border-box', 'important');
-            chatContainer.style.setProperty('background-color', backgroundStyle, 'important');
-            console.log('BackgroundLoader: Applied solid color with full reset:', backgroundStyle);
-        } else {
-            // Default fallback
-            chatContainer.style.backgroundColor = backgroundStyle;
-            chatContainer.style.background = ''; // Clear any gradient
-        }
+        chatContainer.style.background = backgroundStyle;
+        chatContainer.style.backgroundColor = ''; // Clear any solid color
+    } else if (settings.type === 'solid') {
+        // For solid colors, completely clear all gradient properties
+        chatContainer.style.setProperty('background', 'none', 'important');
+        chatContainer.style.setProperty('background-image', 'none', 'important');
+        chatContainer.style.setProperty('background-size', 'auto', 'important');
+        chatContainer.style.setProperty('background-position', '0% 0%', 'important');
+        chatContainer.style.setProperty('background-repeat', 'repeat', 'important');
+        chatContainer.style.setProperty('background-attachment', 'scroll', 'important');
+        chatContainer.style.setProperty('background-origin', 'padding-box', 'important');
+        chatContainer.style.setProperty('background-clip', 'border-box', 'important');
+        chatContainer.style.setProperty('background-color', backgroundStyle, 'important');
+        console.log('BackgroundLoader: Applied solid color with full reset:', backgroundStyle);
     }
 };
 

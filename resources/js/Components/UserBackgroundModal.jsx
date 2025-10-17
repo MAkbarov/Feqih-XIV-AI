@@ -754,17 +754,22 @@ const UserBackgroundModal = ({ isOpen, onClose, isAuthenticated = false }) => {
                                 // Clear the chat background immediately
                                 const chatContainer = document.querySelector('#chat-container, [data-chat-background]');
                                 if (chatContainer) {
-                                    // Clear all background properties to use default CSS classes
-                                    chatContainer.style.setProperty('background', '', 'important');
-                                    chatContainer.style.setProperty('background-image', '', 'important');
-                                    chatContainer.style.setProperty('background-size', '', 'important');
-                                    chatContainer.style.setProperty('background-position', '', 'important');
-                                    chatContainer.style.setProperty('background-repeat', '', 'important');
-                                    chatContainer.style.setProperty('background-color', '', 'important');
-                                    chatContainer.style.setProperty('background-attachment', '', 'important');
-                                    chatContainer.style.setProperty('background-origin', '', 'important');
-                                    chatContainer.style.setProperty('background-clip', '', 'important');
+                                    // Clear all background properties to use default CSS classes (bg-white dark:bg-gray-800)
+                                    chatContainer.style.removeProperty('background');
+                                    chatContainer.style.removeProperty('background-image');
+                                    chatContainer.style.removeProperty('background-size');
+                                    chatContainer.style.removeProperty('background-position');
+                                    chatContainer.style.removeProperty('background-repeat');
+                                    chatContainer.style.removeProperty('background-color');
+                                    chatContainer.style.removeProperty('background-attachment');
+                                    chatContainer.style.removeProperty('background-origin');
+                                    chatContainer.style.removeProperty('background-clip');
                                 }
+                                
+                                // Dispatch event to notify Index.jsx to use default background
+                                window.dispatchEvent(new CustomEvent('backgroundChanged', {
+                                    detail: { type: 'default' }
+                                }));
                                 
                                 // Save the reset settings
                                 try {
