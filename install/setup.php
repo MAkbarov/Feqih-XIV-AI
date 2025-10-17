@@ -431,17 +431,35 @@ function runAllMigrations($pdo) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
         // AI providers
-        '0003_01_01_000000_create_ai_providers_table' => "
+'0003_01_01_000000_create_ai_providers_table' => "
             CREATE TABLE IF NOT EXISTS ai_providers (
                 id bigint unsigned AUTO_INCREMENT PRIMARY KEY,
                 name varchar(255) NOT NULL,
-                driver varchar(50) NOT NULL,
+                driver varchar(255) NOT NULL,
                 model varchar(255) NULL,
                 api_key longtext NULL,
                 base_url varchar(255) NULL,
+                supports_embedding tinyint(1) DEFAULT 0,
+                embedding_model varchar(255) NULL,
+                embedding_base_url varchar(255) NULL,
+                embedding_dimension int NULL,
                 is_active tinyint(1) DEFAULT 0,
                 created_at timestamp NULL,
                 updated_at timestamp NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+        // AI Process Settings
+        '0003_01_02_000000_create_ai_process_settings_table' => "
+            CREATE TABLE IF NOT EXISTS ai_process_settings (
+                id bigint unsigned AUTO_INCREMENT PRIMARY KEY,
+                `key` varchar(255) NOT NULL UNIQUE,
+                `value` longtext NULL,
+                category varchar(50) DEFAULT 'general',
+                description text NULL,
+                is_active tinyint(1) DEFAULT 1,
+                created_at timestamp NULL,
+                updated_at timestamp NULL,
+                INDEX ai_process_settings_cat_active_index (category, is_active)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
         // Chat sessions and messages
@@ -745,10 +763,24 @@ function createAdminUser($pdo, $data) {
 }
 
 function seedDefaultData($pdo) {
-    // Default site settings (align with App\Models\Settings::getDefaults)
+    // Seed AI Process Settings defaults
+    $aiProcessDefaults = [
+        ['key' => 'ai_search_method', 'value' => 'deep_search', 'category' => 'search', 'description' => 'Axtarış metodu: deep_search və ya standard_search'],
+        ['key' => 'ai_no_data_message', 'value' => 'Bu mövzu haqqında məlumat bazamda məlumat yoxdur.', 'category' => 'restrictions', 'description' => 'Məlumat olmadıqda mesaj'],
+        ['key' => 'ai_restriction_command', 'value' => 'YALNIZ BU CÜMLƏ İLƏ CAVAB VER VƏ BAŞQA HEÇ NƏ YAZMA:', 'category' => 'restrictions', 'description' => 'Məhdudiyyət komandası'],
+        ['key' => 'ai_format_islamic_terms', 'value' => json_encode(['dəstəmaz','namaz','oruc','hac','zəkat','qiblə','imam','ayə','hadis','sünnet','fərz','vacib','məkruh','haram','halal','Allah','Peyğəmbər','İslam','Quran']), 'category' => 'format', 'description' => 'Bold ediləcək terminlər (JSON)'],
+        ['key' => 'ai_prompt_strict_identity', 'value' => 'Sən İslami köməkçi AI assistantsan və dini məsələlərdə yardım edirsən.', 'category' => 'prompts', 'description' => 'Strict identity'],
+        ['key' => 'ai_prompt_normal_identity', 'value' => 'Sən köməkçi AI assistantsan və istifadəçilərə yardım edirsən.', 'category' => 'prompts', 'description' => 'Normal identity'],
+    ];
+    foreach ($aiProcessDefaults as $row) {
+        $stmt = $pdo->prepare("INSERT INTO ai_process_settings (`key`, `value`, category, description, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, NOW(), NOW()) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), category = VALUES(category), description = VALUES(description), is_active = VALUES(is_active)");
+        $stmt->execute([$row['key'], $row['value'], $row['category'], $row['description']]);
+    }
+
+    // Default site settings (align with App\\Models\\Settings::getDefaults)
     $settings = [
         // Application Settings
-        'app_version' => '1.2.1',
+'app_version' => '1.0.0',
         'site_name' => 'XIV AI Chatbot Platform',
         'chatbot_name' => 'XIV AI',
         

@@ -560,15 +560,19 @@ const SystemUpdate = ({ footerSettings, currentVersion, updateAvailable, latestV
                                         Son Versiya: v{latestVersion}
                                     </div>
                                 )}
-                                {lastUpdated && (
+{lastUpdated && (
                                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        Son yenilənmə: {new Date(lastUpdated).toLocaleDateString('az-AZ', {
-                                            year: 'numeric',
-                                            month: 'short', 
-                                            day: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
+                                        {(() => {
+                                            try {
+                                                const d = new Date(lastUpdated);
+                                                const y = d.getFullYear();
+                                                const m = String(d.getMonth()+1).padStart(2,'0');
+                                                const day = String(d.getDate()).padStart(2,'0');
+                                                const hh = String(d.getHours()).padStart(2,'0');
+                                                const mm = String(d.getMinutes()).padStart(2,'0');
+                                                return `Son yenilənmə: ${y}-${m}-${day} ${hh}:${mm}`;
+                                            } catch { return 'Son yenilənmə: -'; }
+                                        })()}
                                     </div>
                                 )}
                             </div>
