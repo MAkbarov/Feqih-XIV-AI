@@ -221,8 +221,10 @@ class SystemUpdateController extends Controller
             
         }, 200, [
             'Content-Type' => 'text/plain; charset=utf-8',
-            'Cache-Control' => 'no-cache',
-            'X-Accel-Buffering' => 'no'
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'X-Accel-Buffering' => 'no',  // Nginx FastCGI buffering disable
+            'X-No-Buffer' => '1',          // Generic proxy buffer disable
+            'Connection' => 'keep-alive'   // Keep connection open for streaming
         ]);
     }
     
@@ -1342,8 +1344,10 @@ class SystemUpdateController extends Controller
     
     private function logMessage(string $message, int $progress = null, int $step = null, int $totalSteps = null): void
     {
-        // Output to stream
-        echo $message . "\n";
+        // Output to stream with padding for hosting buffer bypass
+        // Hosting providers buffer small chunks - we need bigger output
+        $paddedMessage = $message . str_repeat(' ', 1024) . "\n";
+        echo $paddedMessage;
         
         // Log to file
         try {
@@ -1382,11 +1386,19 @@ class SystemUpdateController extends Controller
             // Ignore progress file errors
         }
         
-        // Flush output
-        if (ob_get_level()) {
-            ob_flush();
+        // Aggressive flush for hosting environment (nginx/FastCGI buffering)
+        // Flush ALL output buffer levels (nested buffers)
+        while (ob_get_level() > 0) {
+            @ob_end_flush();
         }
-        flush();
+        
+        // Final PHP flush
+        @flush();
+        
+        // Force immediate send (if available)
+        if (function_exists('fastcgi_finish_request')) {
+            // Don't use this - it closes connection
+        }
     }
     
     private function logUpdateToDatabase(string $from, ?string $to, string $status, string $message): void
@@ -1737,8 +1749,12 @@ class SystemUpdateController extends Controller
             
         }, 200, [
             'Content-Type' => 'text/plain; charset=utf-8',
-            'Cache-Control' => 'no-cache',
-            'X-Accel-Buffering' => 'no'
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'X-Accel-Buffering' => 'no',  // Disable nginx buffering
+            'X-No-Buffer' => '1',          // Disable generic proxy buffering
+            'Connection' => 'keep-alive'   // Keep connection alive for streaming
         ]);
     }
     
