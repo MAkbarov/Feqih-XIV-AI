@@ -13,10 +13,22 @@ return new class extends Migration
     {
         // 🚀 SUPER-FAST SEARCH İNDEKSLƏRİ
         
+        // Check if table exists first (critical for fresh installs)
+        if (!Schema::hasTable('knowledge_base')) {
+            // Table doesn't exist yet - skip this migration
+            // It will be created by base migration first
+            return;
+        }
+        
         // Helper function - index mövcuddurmu yoxla
         $indexExists = function($tableName, $indexName) {
-            $indexes = \DB::select("SHOW INDEX FROM {$tableName} WHERE Key_name = ?", [$indexName]);
-            return count($indexes) > 0;
+            try {
+                $indexes = \DB::select("SHOW INDEX FROM {$tableName} WHERE Key_name = ?", [$indexName]);
+                return count($indexes) > 0;
+            } catch (\Exception $e) {
+                // Table doesn't exist or other error
+                return false;
+            }
         };
         
         Schema::table('knowledge_base', function (Blueprint $table) use ($indexExists) {
@@ -75,22 +87,32 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Check if table exists before trying to drop indexes
+        if (!Schema::hasTable('knowledge_base')) {
+            return;
+        }
+        
         Schema::table('knowledge_base', function (Blueprint $table) {
-            // Drop all indexes
-            $table->dropIndex('idx_kb_is_active');
-            $table->dropIndex('idx_kb_category');
-            $table->dropIndex('idx_kb_source_url');
-            $table->dropIndex('idx_kb_active_category');
-            $table->dropIndex('idx_kb_created_at');
+            // Drop all indexes (with existence checks to prevent errors)
+            try { $table->dropIndex('idx_kb_is_active'); } catch (\Exception $e) {}
+            try { $table->dropIndex('idx_kb_category'); } catch (\Exception $e) {}
+            try { $table->dropIndex('idx_kb_source_url'); } catch (\Exception $e) {}
+            try { $table->dropIndex('idx_kb_active_category'); } catch (\Exception $e) {}
+            try { $table->dropIndex('idx_kb_created_at'); } catch (\Exception $e) {}
             
             // Drop FULLTEXT indexes
             try {
                 \DB::statement('ALTER TABLE knowledge_base DROP INDEX idx_kb_title_fulltext');
+            } catch (\Exception $e) {}
+            try {
                 \DB::statement('ALTER TABLE knowledge_base DROP INDEX idx_kb_content_fulltext');
+            } catch (\Exception $e) {}
+            try {
                 \DB::statement('ALTER TABLE knowledge_base DROP INDEX idx_kb_title_content_fulltext');
-            } catch (\Exception $e) {
+            } catch (\Exception $e) {}
+            try {
                 $table->dropIndex('idx_kb_title');
-            }
+            } catch (\Exception $e) {}
         });
     }
 };
