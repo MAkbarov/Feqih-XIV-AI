@@ -36,6 +36,8 @@ class RAGQueryService
     public function query(string $question, array $options = []): array
     {
         $startTime = microtime(true);
+        // Optional restrictions passed by caller (UI/controller)
+        $restrictKbId = isset($options['restrict_kb_id']) ? (int) $options['restrict_kb_id'] : null;
 
         Log::info('🔍 RAG QUERY STARTED', [
             'question' => $question,
@@ -107,6 +109,17 @@ class RAGQueryService
             $allowedHosts = array_values(array_filter(array_map(function($h){ return strtolower(trim($h)); }, explode(',', $allowedHostsCsv))));
 
             $similarChunks = $this->vectorStore->query($questionVector, $topK);
+            $rawSimilar = $similarChunks; // keep a copy for fallback and dominance calc
+
+            // If a KB restriction is provided, keep only matches from that KB
+            if ($restrictKbId !== null) {
+                $filtered = array_values(array_filter($similarChunks, function($c) use ($restrictKbId) {
+                    return (int) ($c['metadata']['knowledge_base_id'] ?? -1) === $restrictKbId;
+                }));
+                if (!empty($filtered)) {
+                    $similarChunks = $filtered;
+                }
+            }
 
             if (empty($similarChunks)) {
                 Log::warning('⚠️ NO SIMILAR CHUNKS FOUND');
@@ -156,10 +169,22 @@ class RAGQueryService
                         $context = implode("\n\n---\n\n", $contextParts);
                         $prompt = $this->buildStrictRAGPrompt($question, $context);
                         $answer = $this->chatProvider->generateResponse($prompt, [
-                            'temperature' => 0.3,
+                            'temperature' => 0.15,
                             'max_tokens' => 2000
                         ]);
                         $duration = round((microtime(true) - $startTime) * 1000);
+
+                        // Determine dominant KB from fallback rows as well
+                        $kbCounts = [];
+                        $maxIdxByKb = [];
+                        foreach ($likeQuery as $ch) {
+                            $kid = (int) $ch->knowledge_base_id;
+                            $kbCounts[$kid] = ($kbCounts[$kid] ?? 0) + 1;
+                            $maxIdxByKb[$kid] = max($maxIdxByKb[$kid] ?? -1, (int) ($ch->chunk_index ?? -1));
+                        }
+                        arsort($kbCounts);
+                        $domKb = !empty($kbCounts) ? array_key_first($kbCounts) : null;
+
                         return [
                             'answer' => trim($answer),
                             'sources' => array_values($sources),
@@ -167,7 +192,9 @@ class RAGQueryService
                                 'chunks_used' => count($contextParts),
                                 'context_length' => mb_strlen($context),
                                 'duration_ms' => $duration,
-                                'top_relevance_score' => 0
+                                'top_relevance_score' => 0,
+                                'dominant_kb_id' => $domKb,
+                                'max_used_chunk_index_for_dominant' => $domKb !== null ? ($maxIdxByKb[$domKb] ?? null) : null,
                             ]
                         ];
                     }
@@ -415,29 +442,21 @@ class RAGQueryService
                     ];
                     $answer = $this->chatProvider->generateResponse($prompt, $generationParams);
                 } else {
-                    // Rewrite for fluency without adding facts; show summary first, then optional source excerpt
+                    // Rewrite for fluency without adding faktlar; default output is concise numbered summary
                     $prepend = (bool) $this->getSetting('rag_constrained_prepend_extract', false);
                     $appendExcerpt = (bool) $this->getSetting('rag_constrained_append_extract', false);
                     $appendChars = (int) $this->getSetting('rag_append_excerpt_chars', 1200);
                     $rewrite = trim($this->rewriteFromExtract($extract, $question));
-                    if ($prepend) {
-                        $answer = trim($extract) . "\n\n" . $rewrite;
-                    } else {
-                        $answer = $rewrite;
-                    }
+                    $answer = $prepend && $rewrite !== '' ? (trim($extract) . "\n\n" . $rewrite) : ($rewrite !== '' ? $rewrite : $extract);
                     if ($appendExcerpt) {
-                        // Disabled by default: show sources via UI instead of appending snippet into text
-                        // $snippet = $this->smartTrimToSentence($extract, $appendChars);
-                        // if ($snippet !== '') {
-                        //     $answer .= "\n\n---\nMənbədən sitat (qısa):\n" . $snippet;
-                        // }
+                        // optional snippet append disabled by default
                     }
                 }
             } else {
                 // Generative (legacy) mode with strict prompt
                 $prompt = $this->buildStrictRAGPrompt($question, $context);
                 $generationParams = [
-                    'temperature' => 0.2,
+'temperature' => 0.1,
                     'max_tokens' => 2000,
                     'frequency_penalty' => 0.2,
                     'presence_penalty' => 0.1,
@@ -996,11 +1015,14 @@ $next = \App\Models\KnowledgeBaseChunk::where('knowledge_base_id', $chunk->knowl
         $prompt = <<<PROMPT
 Sən yalnız aşağıdakı MƏNBƏ MƏTN-ə əsaslanaraq cavab verən köməkçisən.
 QAYDALAR:
-- YALNIZ MƏNBƏ MƏTN-də olan məlumatdan istifadə et.
-- Yeni fakt, addım, termin və ya qayda əlavə ETMƏ.
-- Mətnin mənasını dəyişmədən çox qısa və aydın YEKUN XÜLASƏ ver.
-- Maddələri 1), 2), 3) ... kimi nömrələ; əgər “şərtlər”, “vacibatlar”, “addımlar” varsa, onları ayrıca bəndlərlə ver.
-- Uzun izah vermə; xülasə 7–12 maddəni keçməsin; terminləri saxla.
+- YALNIZ MƏNBƏ MƏTN-də olan məlumatdan istifadə et (kənar bilgi YOXDUR).
+- İstifadəçinin sualındakı niyyəti müəyyən et: (a) necə/qayda/addımlar, (b) şərtlər, (c) batil edənlər/pozur, (d) vacibat/sünnət, (e) tərif/xülasə.
+- Cavabı həmin niyyətə uyğun ver:
+  • "Necə/Qayda" → addım-addım ardıcıllıq (1), 2), 3) ...)
+  • "Şərtlər" → şərtlərin siyahısı (1), 2), ...)
+  • "Batil edənlər" → yalnız etibarsız edən hallar (1), 2), ...)
+  • Digər hallarda → qısa əsas məqamlar (1), 2), ...)
+- Yeni fakt əlavə ETMƏ; yalnız mənbədən seç və qısaca ifadə et. Xülasə 7–12 maddəni keçməsin.
 
 MƏNBƏ MƏTN:
 {$extract}

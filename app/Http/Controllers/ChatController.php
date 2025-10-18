@@ -179,6 +179,10 @@ class ChatController extends Controller
                         $ragOptions['kb_id'] = (int) $request->input('kb_id');
                         $ragOptions['start_after_index'] = (int) $request->input('start_after_index', -1);
                     }
+                    // Optional topic anchoring from UI
+                    if ($request->filled('context_kb_id')) {
+                        $ragOptions['restrict_kb_id'] = (int) $request->input('context_kb_id');
+                    }
                     $ragResult = $rag->query($message, $ragOptions);
                     $ragAnswer = is_string($ragResult['answer'] ?? null) ? $ragResult['answer'] : '';
 
@@ -342,18 +346,19 @@ class ChatController extends Controller
     /**
      * Köhnə feedback sistemi - şikayət göndərmək üçün
      */
-    public function reportFeedback(Request $request)
+public function reportFeedback(Request $request)
     {
         $request->validate([
             'message_content' => 'required|string',
             'message_id' => 'nullable|string',
             'session_id' => 'nullable|string',
             'timestamp' => 'nullable|string',
-            'user_info' => 'nullable'
+            'user_info' => 'nullable',
+            'comment' => 'nullable|string|max:1000',
         ]);
 
-        // Cədvələ yaz
-        $this->saveFeedback($request, ChatFeedback::FEEDBACK_REPORT);
+        // Cədvələ yaz (optional user comment supported)
+        $this->saveFeedback($request, ChatFeedback::FEEDBACK_REPORT, $request->comment);
 
         $feedbackData = [
             'message_content' => $request->message_content,

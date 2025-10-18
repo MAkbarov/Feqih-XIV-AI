@@ -14,6 +14,7 @@ import GuestTermsModal from '@/Components/GuestTermsModal';
 import DeleteChatModal from '@/Components/DeleteChatModal';
 import TypingDots from '@/Components/TypingDots';
 import UserBackgroundModal from '@/Components/UserBackgroundModal';
+import FeedbackModal from '@/Components/FeedbackModal';
 import { loadUserBackground } from '@/Utils/BackgroundLoader';
 import { createPortal } from 'react-dom';
 
@@ -159,7 +160,10 @@ export default function ChatIndex({ auth, sessions = [], settings = {}, theme: p
   const [showFontPanel, setShowFontPanel] = useState(false);
   // Per-message font scales and open panel state
   const [messageFontScales, setMessageFontScales] = useState(new Map());
-  const [openFontPanelFor, setOpenFontPanelFor] = useState(null);
+const [openFontPanelFor, setOpenFontPanelFor] = useState(null);
+  // Feedback modal state
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [reportTarget, setReportTarget] = useState(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   useEffect(() => {
     try { localStorage.setItem('messageFontScale', String(messageFontScale)); } catch (e) {}
@@ -597,9 +601,20 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
     setAbortController(controller);
 
     try {
+      // Heuristic: if last AI msg has a KB and the question looks like follow-up, anchor to that KB
+      const lastAssistant = [...messages].reverse().find(x => x.role === 'assistant' && x.ragMeta?.dominant_kb_id != null);
+      const looksFollowUp = (() => {
+        const q = (userMsg.content || '').trim().toLowerCase();
+        const short = q.length <= 60;
+        const cues = ['şərt', 'şərtlər', 'qayd', 'necə', 'necədir', 'nədir', 'davam', 'daha', 'izah', 'addım'];
+        return short && cues.some(c => q.includes(c));
+      })();
+      const contextKbId = lastAssistant && looksFollowUp ? lastAssistant.ragMeta.dominant_kb_id : undefined;
+
       const { data } = await axios.post('/chat/send', {
         message: userMsg.content,
         session_id: currentSessionId,
+        ...(contextKbId ? { context_kb_id: contextKbId } : {})
       }, {
         signal: controller.signal
       });
@@ -1758,41 +1773,9 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
                               </div>
                             </button>
                             <button
-                              onClick={() => {
-                                // Show immediate feedback to user
-                                toast.success('Geribildirişiniz göndərilir...');
-                                
-                                // Send the request asynchronously without blocking UI
-                                const sendFeedback = async () => {
-                                  try {
-                                    // Ensure message_id is a string if available; backend expects string for report-feedback
-                                    const rawId = m.id;
-                                    const strId = (rawId !== undefined && rawId !== null) ? String(rawId) : undefined;
-                                    const payload = {
-                                      message_content: m.content || m.fullContent,
-                                      session_id: currentSessionId,
-                                      timestamp: m.created_at,
-                                      user_info: auth?.user ? { name: auth.user.name, email: auth.user.email } : 'Qonaq istifadəçi'
-                                    };
-                                    if (strId !== undefined) payload.message_id = strId;
-                                    
-                                    const response = await axios.post('/chat/report-feedback', payload);
-                                    
-                                    // Show success after 1 second instead of waiting for server
-                                    setTimeout(() => {
-                                      toast.success('Geribildirişiniz göndərildi!');
-                                    }, 1000);
-                                  } catch (error) {
-                                    console.error('Feedback report error:', error);
-                                    const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Xəta baş verdi';
-                                    setTimeout(() => {
-                                      toast.error('Geribildiriş göndərilmədi: ' + errorMessage);
-                                    }, 1000);
-                                  }
-                                };
-                                
-                                // Execute asynchronously
-                                sendFeedback();
+onClick={() => {
+                                setReportTarget(m);
+                                setShowFeedbackModal(true);
                               }}
                               className="p-1 md:p-1.5 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all group/btn"
                               title="Səhv cavab haqqında bildiş göndər"
@@ -2042,10 +2025,42 @@ const siteName = settings.site_name || 'XIV AI Chatbot Platform';
       />
       
       {/* User Background Settings Modal */}
-      <UserBackgroundModal 
+  <UserBackgroundModal 
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         isAuthenticated={!!auth?.user}
+      />
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        messagePreview={reportTarget?.content || reportTarget?.fullContent || ''}
+onSubmit={async ({ tags, comment }) => {
+          // Build payload first, then close modal instantly
+          const rt = reportTarget;
+          const rawId = rt?.id;
+          const strId = (rawId !== undefined && rawId !== null) ? String(rawId) : undefined;
+          const mergedComment = `${(tags && tags.length ? '[' + tags.join(', ') + '] ' : '')}${comment || ''}`.trim();
+          const payload = {
+            message_content: rt?.content || rt?.fullContent || '',
+            session_id: currentSessionId,
+            timestamp: rt?.created_at,
+            user_info: auth?.user ? { name: auth.user.name, email: auth.user.email } : 'Qonaq istifadəçi',
+            comment: mergedComment || undefined,
+          };
+          if (strId !== undefined) payload.message_id = strId;
+          setShowFeedbackModal(false);
+          setReportTarget(null);
+          // Fire request in background
+          axios.post('/chat/report-feedback', payload)
+            .then(() => toast.success('Geribildirişiniz göndərildi!'))
+            .catch((error) => {
+              console.error('Feedback report error:', error);
+              const msg = error?.response?.data?.error || error?.response?.data?.message || 'Xəta baş verdi';
+              toast.error('Geribildiriş göndərilmədi: ' + msg);
+            });
+        }}
       />
     </div>
     </div>
