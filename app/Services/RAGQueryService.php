@@ -27,6 +27,33 @@ class RAGQueryService
     }
 
     /**
+     * Detect small-talk to skip RAG search
+     */
+    private function isSmallTalk(string $text): bool
+    {
+        $t = mb_strtolower(trim($text), 'UTF-8');
+        // Normalize Azerbaijani chars
+        $map = ['ə'=>'e','ı'=>'i','ş'=>'s','ç'=>'c','ö'=>'o','ü'=>'u','ğ'=>'g'];
+        $t = strtr($t, $map);
+        
+        $patterns = [
+            '/^(?:salam|selam|merhaba|hello|hi|hey)[.!?\s]*$/u',
+            '/(?:neces?en|hal-?iniz nece?dir|sabah xeyir|axsam xeyir)/u',
+            '/^(?:tesek+?r|sag ol|cok sagol|minnetdar)[.!?\s]*$/u',
+        ];
+        foreach ($patterns as $re) {
+            if (preg_match($re, $t)) return true;
+        }
+        
+        $len = mb_strlen($t, 'UTF-8');
+        if ($len <= 8 && !str_contains($t, '?')) {
+            $short = ['salam','selam','hello','hi','hey','sag ol','tesekkur'];
+            if (in_array($t, $short)) return true;
+        }
+        return false;
+    }
+
+    /**
      * Query RAG system with user question
      * 
      * @param string $question User's question
@@ -45,6 +72,29 @@ class RAGQueryService
         ]);
 
         try {
+            // Small-talk check: return friendly response without RAG
+            if ($this->isSmallTalk($question)) {
+                Log::info('🗣️ RAG: Small-talk detected, returning friendly response', [
+                    'question' => $question
+                ]);
+                $responses = [
+                    'Salam! Necə kömək edə bilərəm?',
+                    'Salamlar! Sizə necə kömək edə bilərəm?',
+                    'Salam! Buyurun, sualınız varmı?',
+                ];
+                return [
+                    'answer' => $responses[array_rand($responses)],
+                    'sources' => [],
+                    'metadata' => [
+                        'small_talk' => true,
+                        'chunks_used' => 0,
+                        'context_length' => 0,
+                        'duration_ms' => 0,
+                        'top_relevance_score' => 0
+                    ]
+                ];
+            }
+
             // CONTINUATION MODE: if explicitly requested, continue from given KB and chunk_index without fresh vector search
             if (($options['continue'] ?? false) && isset($options['kb_id']) && isset($options['start_after_index'])) {
                 $kbId = (int) $options['kb_id'];
