@@ -78,9 +78,11 @@ class RAGQueryService
                     'question' => $question
                 ]);
                 $responses = [
-                    'Salam! Necə kömək edə bilərəm?',
-                    'Salamlar! Sizə necə kömək edə bilərəm?',
-                    'Salam! Buyurun, sualınız varmı?',
+                    'Salam! Necə kömək edə bilərəm? İslami məsələlərlə bağlı sualınız varsa, məmnüniyyətlə cavab verərəm.',
+                    'Salamlar! Sizə necə kömək edə bilərəm? Dini mövzuları soruşa bilərsiniz.',
+                    'Salam! Buyurun, sualınız varmı? Şəriət, ibadat və ya digər İslami məsələlər haqqında soruşa bilərsiniz.',
+                    'Salam! Xöş gördük. İslami biliklərlə bağlı sualınızı yaza bilərsiniz.',
+                    'Salamlar! Necəsən? Şəriət və ibadat mövzularında köməyə ehtiyacınız varsa, buyurun.',
                 ];
                 return [
                     'answer' => $responses[array_rand($responses)],
@@ -449,7 +451,7 @@ class RAGQueryService
             }
 
             // Choose output mode: extractive | constrained | generative
-            $outputMode = (string) $this->getSetting('rag_output_mode', 'constrained');
+            $outputMode = (string) $this->getSetting('rag_output_mode', 'generative');
 
             // Determine if we should anchor to the start of the dominant KB (for how-to queries)
             $extract = null;
