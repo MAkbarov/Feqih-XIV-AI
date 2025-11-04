@@ -50,6 +50,47 @@ class AiService
         if ($hasLatin) return 'latin';
         return 'unknown';
     }
+    /**
+     * Detect small-talk / greeting or meta chit-chat; avoids KB search.
+     */
+    protected function isSmallTalk(string $text): bool
+    {
+        $t = $this->normalizeForSearch(trim($text));
+        if ($t === '') return false;
+        $patterns = [
+            '/^(?:salam|salamlar|salam aleykum|salamun aleykum|salamün aleykum|selam|merhaba|hello|hi|hey)[.!?\s]*$/u',
+            '/(?:nec?əs?ən|nec?e?s?en|necesen|necəsen|necəsən|hal-?ınız nec?e?dir|sabah(?:ınız)? xeyir|axşam(?:ınız)? xeyir)/u',
+            '/^(?:t[eə]ş[eə]kk?r(?:l?r)?|sağ ol|sag ol|cok sagol|minn?tdar(?:am)?)[.!?\s]*$/u',
+            '/^(?:k[öo]m[eə]k|yard[ıi]m)\b/u',
+            '/^(?:s[eə]n kims[eə]n|kims[eə]n? s[eə]n|kimsen\?)$/u',
+            '/^(?:test|ping)$/u',
+        ];
+        foreach ($patterns as $re) {
+            if (preg_match($re, $t)) return true;
+        }
+        // very short inputs without question marks likely small talk
+        $len = mb_strlen($t, 'UTF-8');
+        if ($len <= 8 && !str_contains($t, '?')) {
+            $short = ['salam','selam','merhaba','hello','hi','hey','saqol','sag ol','sağ ol','tesekkur','tesekkurler','təşəkkür','təşəkkürlər'];
+            foreach ($short as $w) { if ($t === $w) return true; }
+        }
+        return false;
+    }
+
+    /**
+     * Build a lightweight prompt for small talk so the assistant can reply politely
+     * without triggering strict KB/no-data flows.
+     */
+    protected function buildSmallTalkPrompt(string $userQuery): string
+    {
+        $prompt = "Söhbət rejimi: istifadəçi ilə nəzakətli və qısa ünsiyyət qur.\n"
+            . "- Məlumat bazasında axtarış ETMƏ.\n"
+            . "- 1–2 cümləlik mehriban cavab ver və lazım olsa kömək təklif et.\n"
+            . "- Faktual iddialar vermə, yalnız salamlaşma/söhbət kontekstində cavab ver.\n"
+            . "İstifadəçinin ifadəsi: \"{$userQuery}\"";
+        return $prompt;
+    }
+
     protected $provider;
     protected $client;
     protected $trainingService;
@@ -146,16 +187,29 @@ class AiService
                 'temperature' => floatval($this->provider->temperature ?? 0.7),
             ];
 
-            // Force ultra-strict generation when external learning is blocked
+            // Detect if this is small-talk (check system prompt for small-talk marker)
+            $isSmallTalk = false;
+            foreach ($messages as $msg) {
+                if (($msg['role'] ?? '') === 'system' && str_contains($msg['content'] ?? '', 'Söhbət rejimi:')) {
+                    $isSmallTalk = true;
+                    break;
+                }
+            }
+
+            // Force ultra-strict generation when external learning is blocked (but NOT for small-talk)
             $strictMode = (bool) Settings::get('ai_strict_mode', true);
             $superStrictMode = (bool) Settings::get('ai_super_strict_mode', false);
             $blockExternalLearning = (bool) Settings::get('ai_external_learning_blocked', true);
-            if ($blockExternalLearning && ($strictMode || $superStrictMode)) {
+            if (!$isSmallTalk && $blockExternalLearning && ($strictMode || $superStrictMode)) {
                 $params['temperature'] = 0.0;
                 // Optionally constrain sampling even more if supported
                 $params['top_p'] = 0.1;
                 $params['presence_penalty'] = 0.0;
                 $params['frequency_penalty'] = 0.0;
+            } elseif ($isSmallTalk) {
+                // For small-talk, use conversational params
+                $params['temperature'] = 0.7;
+                $params['max_tokens'] = 150; // short friendly response
             }
 
             // Add custom parameters if defined (but re-clamp max_tokens after merge)
@@ -260,6 +314,30 @@ class AiService
         }
 
         if (!$lastUserMessage) {
+            return $messages;
+        }
+
+        // Small talk/meta detection: skip KB search for greetings/thanks/etc.
+        if ($this->isSmallTalk($lastUserMessage)) {
+            Log::info('SMALL TALK DETECTED - Skipping knowledge base search', [
+                'query' => $lastUserMessage
+            ]);
+            $smallPrompt = $this->buildSmallTalkPrompt($lastUserMessage);
+            $systemMessageIndex = null;
+            foreach ($messages as $index => $msg) {
+                if ($msg['role'] === 'system') {
+                    $systemMessageIndex = $index;
+                    break;
+                }
+            }
+            if ($systemMessageIndex !== null) {
+                $messages[$systemMessageIndex]['content'] = $smallPrompt;
+            } else {
+                array_unshift($messages, [
+                    'role' => 'system',
+                    'content' => $smallPrompt
+                ]);
+            }
             return $messages;
         }
 
@@ -992,26 +1070,21 @@ class AiService
         
         // 2. SUPER STRICT MODE - STRONGEST RESTRICTIONS
         if ($superStrictMode) {
-            $prompt .= "🔒 SUPER STRICT MODE AKTIV 🔒\n";
-            $prompt .= "MÜTLƏDİ QADAĞA:\n";
-            $prompt .= "❌ Təlimatdan KƏNARda HEÇ NƏ YAZMA\n";
-            $prompt .= "❌ Öz biliklərini İSTİFADƏ ETMƏ\n";
-            $prompt .= "❌ Ümumi məlumat VERMƏ\n";
-            $prompt .= "✅ YALNIZ aşağıda verilən məlumatlara ƏSASLAN\n\n";
+            $prompt .= "🔒 Super Strict Mode aktiv\n";
+            $prompt .= "Əsas qayda: yalnız aşağıda verilən məlumatlara əsaslan.\n";
+            $prompt .= "Öz ümumi biliyin əlavə etmə.\n\n";
         }
         
         // 3. EXTERNAL LEARNING BLOCK - CORE RESTRICTION
         if ($blockExternalLearning) {
-            $prompt .= "⚠️ XARİCİ BİLİK QADAĞASI: ⚠️\n";
-            $prompt .= "- Öz ümumi biliklərinindən İSTİFADƏ QADAĞANDIR\n";
-            $prompt .= "- İnternet məlumatları QADAĞANDIR\n";
-            $prompt .= "- YALNIZ admin tərəfindən verilən məlumatları istifadə et\n";
-            $prompt .= "- Əgər məlumat yoxdursa: '{$noDataMessage}'\n\n";
+            $prompt .= "📚 Məlumat mənbəyi: yalnız verilmiş bazadakı məlumatlar.\n";
+            $prompt .= "Ümumi bilik və ya internetdən əlavə məlumat əlavə etmə.\n";
+            $prompt .= "Əgər məlumat bazada yoxdursa, bunu bildirməlisən: '{$noDataMessage}'\n\n";
         }
         
         // 4. INTERNET BLOCKING
         if ($blockInternet) {
-            $prompt .= "🌐 İNTERNET QADAĞASI: İnternet məlumatlarına müraciət ETİMƏ\n\n";
+            $prompt .= "🌐 İnternet məlumatlarına müraciət etmə.\n\n";
         }
         
         // 5. TOPIC RESTRICTIONS
@@ -1026,12 +1099,9 @@ class AiService
         
         // 7. KNOWLEDGE BASE CONTENT (if available)
         if ($hasContent && $useKnowledgeBase) {
-            $prompt .= "\n\n" . str_repeat("=", 80) . "\n";
-            $prompt .= "🔴 DİQQƏT! AŞAĞIDAKI MƏLUMATLAR VERİLİB! 🔴\n";
-            $prompt .= "Bu məlumatlar DOLU və TƏFSİLATLIDIR. Onları MÜTLƏQ OXUYUN və İSTİFADƏ EDİN!\n";
-            $prompt .= "'Məlumat yoxdur' DEMƏYİN, çünki aşağıda məlumatlar VERİLİB!\n";
-            $prompt .= str_repeat("=", 80) . "\n\n";
-            $prompt .= "📚 VERİLƏN MƏLUMAT MƏNBƏLƏR (YALNIZ BUNLARI İSTİFADƏ ET):\n";
+            $prompt .= "\n\n" . str_repeat("=", 60) . "\n";
+            $prompt .= "📚 Aşağıdakı məlumatlar verilmişdir:\n";
+            $prompt .= str_repeat("=", 60) . "\n\n";
             
             if (!empty($urlContent)) {
                 $prompt .= "\n=== PRİORİTET 1: URL MƏLUMATLARI ===\n{$urlContent}\n";
@@ -1043,29 +1113,20 @@ class AiService
                 $prompt .= "\n=== PRİORİTET 3: ÜMUMI BİLİK BAZASI ===\n{$generalContent}\n";
             }
             
-            // RESPONSE RULES - MAXIMUM RESTRICTIONS
-            $prompt .= "\n🎯 CAVAB VERMƏ QAYDALARI:\n";
+            // RESPONSE RULES
+            $prompt .= "\n🎯 Cavab qaydaları:\n";
             
             if ($blockExternalLearning || $superStrictMode) {
-                $prompt .= "\n" . str_repeat("-", 80) . "\n";
-                $prompt .= "❗❗❗ ƏSAS QAYDA ❗❗❗\n";
-                $prompt .= "Yuxarıda VERİLƏN məlumatlar DOLU və MÜFƏSSƏLDIR!\n";
-                $prompt .= "Sən bu məlumatları görürsən və oxuya bilərsən!\n";
-                $prompt .= "Bu məlumatlardan istifadə edərək istifadəçinin SUALINA CAVAB VER!\n";
-                $prompt .= str_repeat("-", 80) . "\n\n";
-                
-                $prompt .= "✅ NƏ ETMELİSƏN:\n";
-                $prompt .= "  1. Yuxarıdakı 'MƏZMUN:' bloklarını OXUYUN\n";
-                $prompt .= "  2. Sualun cavabını məlumatlarda AXTAR\n";
-                $prompt .= "  3. Tapdiqlarınızı Azərbaycan dilində İZAH EDİN\n";
-                $prompt .= "  4. Sonda 'Mənbələr:' yazıb URL-ləri göstərin\n\n";
-                
-                $prompt .= "❌ NƏ ETMƏMƏLİSƏN:\n";
-                $prompt .= "  ✘ 'Məlumat yoxdur' DEMƏ (məlumat yuxarıda VERİLİB!)\n";
-                $prompt .= "  ✘ Öz biliyini əlavə etmə\n";
-                $prompt .= "  ✘ Uydurma və təxmin etmə\n\n";
-                
-                $prompt .= "❗ YADİNDA SAXLA: Yuxarıda DOLU məlumatlar var! Onları OXUYUN və İSTİFADƏ EDİN!\n";
+                $prompt .= "\n";
+                $prompt .= "Cavab verərkən:\n";
+                $prompt .= "  • Yuxarıda verilən məlumatları əsas götür\n";
+                $prompt .= "  • Sualın cavabını məlumatlarda tap və izah et\n";
+                $prompt .= "  • Cavabı Azərbaycan dilində ver\n";
+                $prompt .= "  • Mənbə URL-lərini göstər\n\n";
+                $prompt .= "Qadağalar:\n";
+                $prompt .= "  • Öz biliyindən əlavə məlumat vermə\n";
+                $prompt .= "  • Uydurma və ya təxmin etmə\n";
+                $prompt .= "  • Məlumat yoxdursa, bunu açıq bildir\n\n";
             }
             
             // Query focus
@@ -1086,13 +1147,12 @@ class AiService
         } else if (!$hasContent) {
             // NO CONTENT AVAILABLE - FORCE RESTRICTION
             if ($blockExternalLearning || $useKnowledgeBase) {
-                $prompt .= "\n\n" . str_repeat("=", 80) . "\n";
-                $prompt .= "⛔⛔⛔ HEÇ BİR MƏLUMAT BAZASI MƏVCUD DEYIL ⛔⛔⛔\n";
-                $prompt .= "Məlumat bazasında bu mövzu ilə bağlı HEÇ NƏ VERİLMƏYİB.\n";
-                $prompt .= "Öz bilklərini istifadə etməyin QADAQANDIR.\n";
-                $prompt .= "YALNIZ AŞAĞIDAKI CAVABI VER:\n";
+                $prompt .= "\n\n" . str_repeat("=", 60) . "\n";
+                $prompt .= "⚠️ Məlumat bazasında bu mövzu ilə əlaqəli məlumat tapılmadı.\n";
+                $prompt .= "Ümumi biliyin əlavə etmə.\n";
+                $prompt .= "Aşağıdakı cavabı ver:\n";
                 $prompt .= "'{$noDataMessage}'\n";
-                $prompt .= str_repeat("=", 80) . "\n";
+                $prompt .= str_repeat("=", 60) . "\n";
             }
         }
         

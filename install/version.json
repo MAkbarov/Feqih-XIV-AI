@@ -1,23 +1,15 @@
 {
-    "version": "1.2.0",
-    "release_date": "2025-10-11",
+    "version": "1.2.1",
+    "release_date": "2025-10-17",
     "changes": [
-        "🔧 CRITICAL: Database migration conflicts resolved - fixed hosting deployment",
-        "🔑 FIXED: APP_KEY generation issue for Laravel encryption",
-        "📊 ENHANCED: Migration table reconciliation for existing database tables",
-        "🚀 NEW: SystemUpdate page repair button for hosting deployment fixes",
-        "🎨 MAJOR: Modern chat interface with glass-morphism design",
-        "🔧 FIXED: Textarea focus outline removal for clean UX",
-        "🎯 ENHANCED: Message input area with backdrop blur",
-        "✨ NEW: Background reset functionality with complete cleanup",
-        "🖼️ IMPROVED: User background settings with default type support",
-        "🌙 FIXED: Dark mode info icon visibility improvements",
-        "📱 RESPONSIVE: Enhanced mobile and desktop styling",
-        "🔄 CORRECTED: Enter button icon reference",
-        "💾 DATABASE: Added default enum to user_backgrounds table",
-        "🧹 CLEANUP: Proper file deletion on background reset",
-        "🎭 ANIMATION: Smooth popover effects with blur",
-        "🔍 LOGGING: Enhanced debugging for image operations"
+        "🔥 CRITICAL: Fixed knowledge_base table naming conflicts across migrations",
+        "🛠️ FIXED: Disabled automatic table rename migration (knowledge_base remains singular)",
+        "✅ RESOLVED: All migrations now consistently use 'knowledge_base' table name",
+        "🚀 ENHANCED: Improved streaming headers for better real-time progress updates",
+        "📊 IMPROVED: Apache hosting compatibility for progress streaming",
+        "🔧 FIXED: Migration execution order and table existence checks",
+        "🔑 CORRECTED: Foreign key references in chunks table",
+        "✨ OPTIMIZED: System repair migration detection logic"
     ],
     "requirements": {
         "php": ">=8.1",
@@ -25,5 +17,5 @@
         "mysql": ">=5.7",
         "node": ">=16.0"
     },
-    "update_notes": "MAJOR RELEASE v1.2.0: Complete platform modernization with critical infrastructure fixes! Includes database migration conflict resolution for hosting deployment, APP_KEY generation fixes, glass-morphism UI design, enhanced chat interface, and comprehensive improvements to ensure stable deployment across all hosting environments."
+    "update_notes": "HOTFIX v1.2.1: Critical database migration fixes! Resolves knowledge_base table naming conflicts that prevented deployment on fresh hosting environments. All migrations now use consistent 'knowledge_base' (singular) table name. Enhanced streaming support for Apache environments."
 }

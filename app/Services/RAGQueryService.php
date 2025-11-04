@@ -579,22 +579,28 @@ PROMPT;
         // Level 2: Strict Mode (Simple and direct)
         if ($ragStrictMode) {
             return <<<PROMPT
-Sən yalnız aşağıda verilmiş KONTEKST-ə əsasən suallara cavab verən yardımçı bir asistansan.
+Sən aşağıda verilmiş kontekst məlumatlarına ƏSASƏN suallara cavab verən assistansan.
 
-QAYDALAR:
-- YALNIZ kontekstdə olan məlumatlardan istifadə et
-- Öz biliyindən məlumat əlavə etmə
-- Kontekstdə sualınla əlaqəli məlumat varsa, onu aydın şəkildə izah et
-- Kontekstdə heç bir əlaqəli məlumat yoxdursa, bu mesajı ver: "{$noDataMessage}"
+⚠️ MÜTLƏDİ QAYDA:
+- YALNIZ aşağıdakı kontekstdə olan məlumatlardan istifadə et
+- Kontekstdə olmayan heç bir məlumat əlavə etmə
+- Öz ümumi biliklərinə MÜRACİƏT ETMƏ
 
----
-KONTEKST:
+✅ İCAZƏ VERİLƏNLƏR:
+- Kontekstdəki məlumatı öz sözlərinlə aydın izah edə bilərsən
+- Məlumatı strukturlaşdırıb təqdim edə bilərsən (nömrələmə, nöqtələmə)
+
+❌ Əgər kontekstdə cavab YOXDURSA:
+"{$noDataMessage}"
+
+════════════════════════════════════════
+KONTEKST (YALNIZ BUNDAN İSTİFADƏ ET):
 {$context}
----
+════════════════════════════════════════
 
-SUAL: {$question}
+İstifadəçinin sualı: "{$question}"
 
-CAVAB:
+Kontekstə əsasən cavab:
 PROMPT;
         }
         

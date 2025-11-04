@@ -260,7 +260,7 @@ const AiTraining = ({ knowledgeItems, systemPrompt }) => {
                 single: urlTrainingData.single,
                 max_depth: urlTrainingData.maxDepth,
                 category: urlTrainingData.category,
-                source: urlTrainingData.source || 'Advanced URL Training'
+                source: urlTrainingData.source || 'URL Təlimatçısı'
             });
             
             if (response.data.success) {
@@ -285,7 +285,7 @@ const AiTraining = ({ knowledgeItems, systemPrompt }) => {
             }
         } catch (error) {
             console.error('Advanced URL Training error:', error);
-            const errorMsg = error.response?.data?.message || 'Advanced URL training xətası!';
+            const errorMsg = error.response?.data?.message || 'URL Təlimat xətası!';
             toast.error(`❌ ${errorMsg}`);
         } finally {
             setTrainingInProgress(false);

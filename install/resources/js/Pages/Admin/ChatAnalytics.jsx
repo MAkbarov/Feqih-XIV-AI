@@ -252,7 +252,7 @@ export default function ChatAnalytics({
                 <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                     <div className="flex items-center gap-2 mb-6">
                         <Icon name="chart" size={24} color="#9ca3af" />
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Ǝtraflı Statistika</h2>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Ətraflı Statistika</h2>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div className="text-center">
