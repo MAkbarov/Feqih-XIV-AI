@@ -188,18 +188,22 @@ class ChatController extends Controller
                         $ragOptions['kb_id'] = (int) $request->input('kb_id');
                         $ragOptions['start_after_index'] = (int) $request->input('start_after_index', -1);
                     }
-                    // Optional topic anchoring from UI
+                    // Optional topic anchoring from UI (marks follow-up within a specific KB)
+                    $hasContextKb = false;
                     if ($request->filled('context_kb_id')) {
                         $ragOptions['restrict_kb_id'] = (int) $request->input('context_kb_id');
+                        $hasContextKb = true;
                     }
 
                     $intent = null;
-                    if ($intentRoutingEnabled && !$isContinuation) {
+                    // IMPORTANT: if UI has provided context_kb_id, we treat this as a follow-up fiqh question
+                    // and skip small-talk / out-of-scope routing, letting RAG answer from the same KB.
+                    if ($intentRoutingEnabled && !$isContinuation && !$hasContextKb) {
                         $intent = $this->intentService->detectIntent($message);
                     }
 
                     // Route SMALL_TALK / META / OUT_OF_SCOPE away from RAG
-                    if ($intentRoutingEnabled && !$isContinuation && $intent !== null && $intent !== \App\Services\QueryIntentService::INTENT_FIQH_QUESTION) {
+                    if ($intentRoutingEnabled && !$isContinuation && !$hasContextKb && $intent !== null && $intent !== \App\Services\QueryIntentService::INTENT_FIQH_QUESTION) {
                         $answer = '';
 
                         if ($intent === \App\Services\QueryIntentService::INTENT_SMALL_TALK) {

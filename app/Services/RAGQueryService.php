@@ -121,9 +121,10 @@ class RAGQueryService
                 }
                 $buffer = $this->smartTrimToSentence($buffer, $maxChars);
 
-                // Optionally light rewrite for fluency (no new facts)
-                $answer = trim($this->rewriteFromExtract($buffer, $question));
-                if ($answer === '') { $answer = $buffer; }
+                // CRITICAL FIX: Do NOT use LLM rewrite on continuation - just return raw chunks
+                // LLM was adding its own instructions instead of staying within KB content.
+                // Now we return the exact content from the database without any AI modification.
+                $answer = $buffer;
 
                 $duration = round((microtime(true) - $startTime) * 1000);
 
@@ -221,8 +222,10 @@ class RAGQueryService
                         $context = implode("\n\n---\n\n", $contextParts);
                         $prompt = $this->buildStrictRAGPrompt($question, $context);
                         $answer = $this->chatProvider->generateResponse($prompt, [
-                            'temperature' => 0.15,
-                            'max_tokens' => 2000
+                            'temperature' => 0.05,  // CRITICAL: Very low to stay within KB content
+                            'max_tokens' => 2000,
+                            'frequency_penalty' => 0.3,
+                            'presence_penalty' => 0.0,
                         ]);
                         $duration = round((microtime(true) - $startTime) * 1000);
 
@@ -487,10 +490,10 @@ class RAGQueryService
                     // fallback to generative prompt
                     $prompt = $this->buildStrictRAGPrompt($question, $context);
                     $generationParams = [
-                        'temperature' => 0.2,
+                        'temperature' => 0.05,  // CRITICAL: Very low to stay within KB content
                         'max_tokens' => 2000,
-                        'frequency_penalty' => 0.2,
-                        'presence_penalty' => 0.1,
+                        'frequency_penalty' => 0.3,
+                        'presence_penalty' => 0.0,
                     ];
                     $answer = $this->chatProvider->generateResponse($prompt, $generationParams);
                 } else {
@@ -508,10 +511,10 @@ class RAGQueryService
                 // Generative (legacy) mode with strict prompt
                 $prompt = $this->buildStrictRAGPrompt($question, $context);
                 $generationParams = [
-'temperature' => 0.1,
+                    'temperature' => 0.05,  // CRITICAL: Very low to stay within KB content
                     'max_tokens' => 2000,
-                    'frequency_penalty' => 0.2,
-                    'presence_penalty' => 0.1,
+                    'frequency_penalty' => 0.3,
+                    'presence_penalty' => 0.0,
                 ];
                 $answer = $this->chatProvider->generateResponse($prompt, $generationParams);
             }
@@ -1071,30 +1074,37 @@ $next = \App\Models\KnowledgeBaseChunk::where('knowledge_base_id', $chunk->knowl
         $noDataMessage = (string) $this->getSetting('ai_no_data_message', 'Bağışlayın, bu mövzu haqqında məlumat bazamda dəqiq məlumat tapılmadı.');
         if (trim($extract) === '') return '';
         $prompt = <<<PROMPT
-Sən yalnız aşağıdakı MƏNBƏ MƏTN-ə əsaslanaraq cavab verən köməkçisən.
-QAYDALAR:
-- YALNIZ MƏNBƏ MƏTN-də olan məlumatdan istifadə et (kənar bilgi YOXDUR).
-- İstifadəçinin sualındakı niyyəti müəyyən et: (a) necə/qayda/addımlar, (b) şərtlər, (c) batil edənlər/pozur, (d) vacibat/sünnət, (e) tərif/xülasə.
-- Cavabı həmin niyyətə uyğun ver:
-  • "Necə/Qayda" → addım-addım ardıcıllıq (1), 2), 3) ...)
-  • "Şərtlər" → şərtlərin siyahısı (1), 2), ...)
-  • "Batil edənlər" → yalnız etibarsız edən hallar (1), 2), ...)
-  • Digər hallarda → qısa əsas məqamlar (1), 2), ...)
-- Yeni fakt əlavə ETMƏ; yalnız mənbədən seç və qısaca ifadə et. Xülasə 7–12 maddəni keçməsin.
+***XƏBƏRDARLIQ: BU QAYDALAR MÜTLƏQDİR - POZULMASI QADAĞANDIR!***
 
-MƏNBƏ MƏTN:
+Sən YALNIZ aşağıda verilmiş MƏNBƏ MƏTN-dən köçürmə edərək cavab verən sistemsən.
+
+🚫 KƏSKİN QADAĞALAR:
+1. ÖZ BİLİYİNDƏN, TƏLİMATINDAN, İNTERNETDƏN HEÇ NƏ ƏLAVƏ ETMƏ!
+2. Mənbə mətnində OLMAYAN addımlar, qaydalar, nümunələr ƏLAVƏ ETMƏ!
+3. "Niyyət etmək", "Bismillah demək", "Əlləri əvvəlcədən yumaq" kimi MƏNBƏDƏ AÇIQCA YAZILMAYAN addımlar ƏLAVƏ ETMƏ!
+4. YALNIZ mənbə mətnində aynen yazılan məlumatları istifadə et.
+5. Əgər mənbədə olmayan bir şey lazımdırsa, onu ƏLAVƏ ETMƏ - yalnız olanı yaz!
+
+✅ YEGANƏİCAZƏ VERİLƏN ŞEY:
+- Mənbə mətnindəki məlumatı oxunuşlu nömrələnmiş siyahı şəklində təşkil et
+- Hər nömrə YALNIZ mənbədəki faktları ehtiva etməlidir
+- Heç bir əlavə məlumat, heç bir yeni addım ƏLAVƏ ETMƏ
+
+════════════════════════════════════════
+MƏNBƏ MƏTN (YALNIZ BUNDAN İSTİFADƏ ET):
 {$extract}
+════════════════════════════════════════
 
-SUAL: "{$question}"
+İstifadəçi sualı: "{$question}"
 
-Yalnız XÜLASƏ (nömrələnmiş):
-1)
+📝 CAVAB (yalnız mənbədən, nömrələnmiş, heç bir əlavə YOX):
+1.
 PROMPT;
         $params = [
-            'temperature' => 0.15,
+            'temperature' => 0.05,  // CRITICAL: Very low temperature to prevent adding own knowledge
             'max_tokens' => 1200,
-            'frequency_penalty' => 0.2,
-            'presence_penalty' => 0.1,
+            'frequency_penalty' => 0.3,  // Higher to prevent repetition
+            'presence_penalty' => 0.0,   // Zero to allow staying within source text
         ];
         return $this->chatProvider->generateResponse($prompt, $params);
     }

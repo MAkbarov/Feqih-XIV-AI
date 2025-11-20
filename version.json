@@ -1,5 +1,11 @@
 ﻿{
-    "version":  "1.1.6",
+    "version":  "1.1.7",
     "release_date":  "2025-11-20",
-    "build":  "20251120"
+    "build":  "20251120",
+    "changes":  [
+                    "v1.1.7: Fixed RAG continuation hallucination bug",
+                    "v1.1.7: Fixed RAG continuation hallucination - LLM no longer adds own instructions",
+                    "v1.1.7: Lowered temperature to 0.05 for strict KB-only responses",
+                    "v1.1.7: Enhanced strict mode prompts to prevent AI creativity"
+                ]
 }
