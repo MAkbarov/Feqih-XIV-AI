@@ -23,6 +23,7 @@ use App\Services\AiServiceEnhanced;
 use App\Services\ChatLimitService;
 use App\Services\TrainingService;
 use App\Services\EmbeddingService;
+use App\Services\QueryIntentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -35,15 +36,18 @@ class ChatController extends Controller
 {
     protected $aiService;
     protected $chatLimitService;
+    protected QueryIntentService $intentService;
 
     public function __construct(
         TrainingService $trainingService,
         EmbeddingService $embeddingService,
-        ChatLimitService $chatLimitService
+        ChatLimitService $chatLimitService,
+        QueryIntentService $intentService
     ) {
         // Enhanced AI service istifadə et - daha yaxşı query understanding
         $this->aiService = new AiServiceEnhanced($trainingService, $embeddingService);
         $this->chatLimitService = $chatLimitService;
+        $this->intentService = $intentService;
     }
 
     public function index(): Response
@@ -170,11 +174,16 @@ class ChatController extends Controller
             // If RAG is enabled, ONLY use RAG - no fallback to general AI
             $useRag = (bool) \App\Models\Settings::get('rag_enabled', false);
             if ($useRag) {
+                // Intent-based routing (small-talk/meta/out-of-scope) for RAG path
+                $intentRoutingEnabled = (bool) Settings::get('rag_intent_routing_enabled', true);
+                $isContinuation = $request->boolean('continue') && $request->filled('kb_id');
+
                 try {
                     /** @var \App\Services\RAGQueryService $rag */
                     $rag = app(\App\Services\RAGQueryService::class);
+
                     $ragOptions = [];
-                    if ($request->boolean('continue') && $request->filled('kb_id')) {
+                    if ($isContinuation) {
                         $ragOptions['continue'] = true;
                         $ragOptions['kb_id'] = (int) $request->input('kb_id');
                         $ragOptions['start_after_index'] = (int) $request->input('start_after_index', -1);
@@ -183,6 +192,75 @@ class ChatController extends Controller
                     if ($request->filled('context_kb_id')) {
                         $ragOptions['restrict_kb_id'] = (int) $request->input('context_kb_id');
                     }
+
+                    $intent = null;
+                    if ($intentRoutingEnabled && !$isContinuation) {
+                        $intent = $this->intentService->detectIntent($message);
+                    }
+
+                    // Route SMALL_TALK / META / OUT_OF_SCOPE away from RAG
+                    if ($intentRoutingEnabled && !$isContinuation && $intent !== null && $intent !== \App\Services\QueryIntentService::INTENT_FIQH_QUESTION) {
+                        $answer = '';
+
+                        if ($intent === \App\Services\QueryIntentService::INTENT_SMALL_TALK) {
+                            $variants = [
+                                'Salam! Necə kömək edə bilərəm? İslami məsələlərlə bağlı sualınız varsa, məmnuniyyətlə cavab verərəm.',
+                                'Salamlar! Sizə necə kömək edə bilərəm? Dini mövzuları soruşa bilərsiniz.',
+                                'Salam! Buyurun, sualınız varmı? Şəriət, ibadət və ya digər İslami məsələlər haqqında soruşa bilərsiniz.',
+                                'Salam! Xoş gördük. İslami biliklərlə bağlı sualınızı yaza bilərsiniz.',
+                                'Salamlar! Necəsən? Şəriət və ibadət mövzularında köməyə ehtiyacınız varsa, buyurun.',
+                            ];
+                            $answer = $variants[array_rand($variants)];
+                        } elseif ($intent === \App\Services\QueryIntentService::INTENT_META) {
+                            $defaultMeta = 'Mən yalnız İslam fiqhi və şəriət mövzularında, admin tərəfindən əlavə edilmiş etibarlı mənbələr əsasında cavab verirəm. Digər mövzularda və ya şəxsi fətva tələb edən suallarda cavab vermirəm.';
+                            $answer = (string) Settings::get('ai_meta_message', $defaultMeta);
+                        } elseif ($intent === \App\Services\QueryIntentService::INTENT_OUT_OF_SCOPE) {
+                            $defaultOoS = 'Bu sistem yalnız İslam fiqhi və şəriət mövzularına aid suallara cavab verir. Bu mövzudan kənar suallara cavab vermir.';
+                            $answer = (string) Settings::get('ai_out_of_scope_message', $defaultOoS);
+                        }
+
+                        if ($answer === '') {
+                            // Safety: if for some reason we ended up here without an answer, fall back to RAG.
+                            $intent = \App\Services\QueryIntentService::INTENT_FIQH_QUESTION;
+                        } else {
+                            // Save assistant message (non-RAG path)
+                            $assistantMessage = $chatSession->messages()->create([
+                                'role' => 'assistant',
+                                'content' => $answer,
+                                'tokens_used' => 0,
+                            ]);
+
+                            // Track message count for limits
+                            $this->chatLimitService->incrementMessageCount($user, $ipAddress, $deviceId);
+                            $updatedLimitCheck = $this->chatLimitService->checkMessageLimit($user, $ipAddress, $deviceId);
+
+                            $resp = response()->json([
+                                'session_id' => $sessionId,
+                                'message' => $assistantMessage->content,
+                                'tokens' => 0,
+                                'rag' => [
+                                    'used' => false,
+                                    'intent' => $intent,
+                                    'sources' => [],
+                                    'metadata' => [],
+                                ],
+                                'continuation' => false,
+                                'limit_info' => [
+                                    'remaining' => $updatedLimitCheck['remaining'] ?? 0,
+                                    'daily_remaining' => $updatedLimitCheck['daily_remaining'] ?? 0,
+                                    'monthly_remaining' => $updatedLimitCheck['monthly_remaining'] ?? 0,
+                                    'reset_time' => $updatedLimitCheck['reset_time'] ?? null,
+                                    'monthly_reset_time' => $updatedLimitCheck['monthly_reset_time'] ?? null,
+                                    'limit_type' => $updatedLimitCheck['limit_type'] ?? null,
+                                    'limit_value' => $updatedLimitCheck['limit_value'] ?? null
+                                ]
+                            ]);
+                            if ($deviceCookie) { $resp->headers->setCookie($deviceCookie); }
+                            return $resp;
+                        }
+                    }
+
+                    // Default / fiqh questions / continuations → full RAG path
                     $ragResult = $rag->query($message, $ragOptions);
                     $ragAnswer = is_string($ragResult['answer'] ?? null) ? $ragResult['answer'] : '';
 
@@ -199,14 +277,19 @@ class ChatController extends Controller
                     // Get updated limit info
                     $updatedLimitCheck = $this->chatLimitService->checkMessageLimit($user, $ipAddress, $deviceId);
 
+                    $ragMeta = $ragResult['metadata'] ?? [];
+                    if (!isset($ragMeta['intent']) && $intent !== null) {
+                        $ragMeta['intent'] = $intent;
+                    }
+
                     $resp = response()->json([
                         'session_id' => $sessionId,
                         'message' => $assistantMessage->content,
                         'tokens' => 0,
-'rag' => [
+                        'rag' => [
                             'used' => true,
                             'sources' => $ragResult['sources'] ?? [],
-                            'metadata' => $ragResult['metadata'] ?? []
+                            'metadata' => $ragMeta,
                         ],
                         'continuation' => $ragResult['metadata']['continuation'] ?? false,
                         'limit_info' => [

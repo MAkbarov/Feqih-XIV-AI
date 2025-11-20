@@ -178,32 +178,40 @@ export default function AdminDashboard({ stats, system_health, notification_stat
                         <Icon name="lightning" size={24} style={{ color: themeColor }} />
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Qısayollar</h2>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                        {quickActions.map((action, index) => (
-                            <Link
-                                key={index}
-                                href={action.link}
-                                className="group"
-                            >
-                                <motion.div
-                                    whileHover={{ scale: 1.05, y: -5 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md hover:shadow-xl transition-all backdrop-blur-md border border-gray-200 dark:border-gray-700"
+                    <div className="bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200/70 dark:border-gray-700/70 shadow-xl backdrop-blur-2xl p-4 md:p-5">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+                            {quickActions.map((action, index) => (
+                                <Link
+                                    key={index}
+                                    href={action.link}
+                                    className="group"
                                 >
-                                    <div className="flex flex-col items-center text-center space-y-2">
-                                        <div 
-                                            className="w-12 h-12 rounded-lg flex items-center justify-center"
-                                            style={{ backgroundColor: `${themeColor}20` }}
-                                        >
-                                            <Icon name={action.icon} size={24} style={{ color: themeColor }} />
+                                    <motion.div
+                                        whileHover={{ scale: 1.05, y: -4 }}
+                                        whileTap={{ scale: 0.97 }}
+                                        className="relative overflow-hidden rounded-2xl p-3 md:p-4 shadow-md hover:shadow-2xl transition-all duration-200 border border-gray-100/70 dark:border-gray-700/70 bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl"
+                                    >
+                                        <div
+                                            className="absolute inset-0 opacity-60 pointer-events-none"
+                                            style={{
+                                                background: `linear-gradient(135deg, ${themeColor}11, ${getLighterColor(themeColor, 40)}33)`
+                                            }}
+                                        />
+                                        <div className="relative flex flex-col items-center text-center space-y-2">
+                                            <div
+                                                className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shadow-sm"
+                                                style={{ backgroundColor: `${themeColor}1A` }}
+                                            >
+                                                <Icon name={action.icon} size={22} style={{ color: themeColor }} />
+                                            </div>
+                                            <span className="text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white truncate max-w-[110px] md:max-w-[140px]">
+                                                {action.title}
+                                            </span>
                                         </div>
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                                            {action.title}
-                                        </span>
-                                    </div>
-                                </motion.div>
-                            </Link>
-                        ))}
+                                    </motion.div>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
                 </motion.div>
 
